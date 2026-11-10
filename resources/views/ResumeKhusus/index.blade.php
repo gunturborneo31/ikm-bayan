@@ -2,45 +2,12 @@
 
 error_reporting(0);   
 
-$startDate = $_GET['Tahun'] . '-01-01';
+$startDate = \App\Support\SurveyFilter::year() . '-01-01';
 
-$endDate = $_GET['Tahun'] . '-10-03';
+$endDate = \App\Support\SurveyFilter::year() . '-12-31';
 
-if ($_GET['tw'] == null) {
-    $today = date('Y-m-d', strtotime('+1 days'));
-    $endDate = $today;
-    $tw = 1;
-} elseif ($_GET['tw'] == 1) {
-    $startDate = $_GET['Tahun'] . '-01-01';
-    $endDate = $_GET['Tahun'] . '-03-31';
-    $tw = 1;
-} elseif ($_GET['tw'] == 2) {
-    $startDate = $_GET['Tahun'] . '-04-01';
-    $endDate = $_GET['Tahun'] . '-06-31';
-    $tw = 2;
-} elseif ($_GET['tw'] == 3) {
-    $startDate = $_GET['Tahun'] . '-01-01';
-    $endDate = $_GET['Tahun'] . '-06-31';
-    $tw = 2;
-} elseif ($_GET['tw'] == 4) {
-    $startDate = $_GET['Tahun'] . '-07-01';
-    $endDate = $_GET['Tahun'] . '-09-31';
-    $tw = 3;
-} elseif ($_GET['tw'] == 5) {
-    $startDate = $_GET['Tahun'] . '-01-01';
-    $endDate = $_GET['Tahun'] . '-09-31';
-    $tw = 3;
-} elseif ($_GET['tw'] == 6) {
-    $startDate = $_GET['Tahun'] . '-10-01';
-    $endDate = $_GET['Tahun'] . '-12-31';
-    $tw = 4;
-} elseif ($_GET['tw'] == 7) {
-    $startDate = $_GET['Tahun'] . '-01-01';
-    $endDate = $_GET['Tahun'] . '-12-31';
-    $tw = 4;
-}
 
-$terms = array_values(array_unique(array_filter(array_map('trim', explode(',', $_GET['bagian'])))));
+$terms = \App\Support\SurveyFilter::selectedPilar();
 
 $indexTu = ['u1', 'u2', 'u3', 'u4', 'u5', 'u6', 'u7', 'u8', 'u9'];
 if($_GET['Tahun']=='2024'){
@@ -58,93 +25,67 @@ if($_GET['Tahun']=='2024'){
     // dd( $bagian , $kode); // jika tidak ditemukan kembalikan '-'
 
 
-$total = DB::table('survey_responses')->where('tahun', $_GET['Tahun'] ?? date('Y'))
-    ->whereBetween('created_at', [$startDate, $endDate])
-    ->whereIn('jenisPelayanan', $terms)
+$total = \App\Support\SurveyFilter::query()
     ->get()
     ->count();
 
-$jenkel_l = DB::table('survey_responses')->where('tahun', $_GET['Tahun'] ?? date('Y'))
+$jenkel_l = \App\Support\SurveyFilter::query()
     ->where('jenkel', '=', 'Laki - Laki')
-    ->whereBetween('created_at', [$startDate, $endDate])
-    ->whereIn('jenisPelayanan', $terms)
     ->get()
     ->count();
 
-$jenkel_p = DB::table('survey_responses')->where('tahun', $_GET['Tahun'] ?? date('Y'))
+$jenkel_p = \App\Support\SurveyFilter::query()
     ->where('jenkel', '=', 'Perempuan')
-    ->whereBetween('created_at', [$startDate, $endDate])
-    ->whereIn('jenisPelayanan', $terms)
     ->get()
     ->count();
 
-$umur_1 = DB::table('survey_responses')->where('tahun', $_GET['Tahun'] ?? date('Y'))
+$umur_1 = \App\Support\SurveyFilter::query()
     ->whereBetween('usia', [0, 29])
-    ->whereBetween('created_at', [$startDate, $endDate])
-    ->whereIn('jenisPelayanan', $terms)
     ->get()
     ->count();
 
-$umur_2 = DB::table('survey_responses')->where('tahun', $_GET['Tahun'] ?? date('Y'))
+$umur_2 = \App\Support\SurveyFilter::query()
     ->whereBetween('usia', [30, 40])
-    ->whereBetween('created_at', [$startDate, $endDate])
-    ->whereIn('jenisPelayanan', $terms)
     ->get()
     ->count();
 
-$umur_3 = DB::table('survey_responses')->where('tahun', $_GET['Tahun'] ?? date('Y'))
+$umur_3 = \App\Support\SurveyFilter::query()
     ->whereBetween('usia', [41, 50])
-    ->whereBetween('created_at', [$startDate, $endDate])
-    ->whereIn('jenisPelayanan', $terms)
     ->get()
     ->count();
 
-$umur_4 = DB::table('survey_responses')->where('tahun', $_GET['Tahun'] ?? date('Y'))
+$umur_4 = \App\Support\SurveyFilter::query()
     ->whereBetween('usia', [51, 100])
-    ->whereBetween('created_at', [$startDate, $endDate])
-    ->whereIn('jenisPelayanan', $terms)
     ->get()
     ->count();
 
-$pendidikan_1 = DB::table('survey_responses')->where('tahun', $_GET['Tahun'] ?? date('Y'))
+$pendidikan_1 = \App\Support\SurveyFilter::query()
     ->where('pendidikan', '=', 'SD')
-    ->whereBetween('created_at', [$startDate, $endDate])
-    ->whereIn('jenisPelayanan', $terms)
     ->get()
     ->count();
 
-$pendidikan_2 = DB::table('survey_responses')->where('tahun', $_GET['Tahun'] ?? date('Y'))
+$pendidikan_2 = \App\Support\SurveyFilter::query()
     ->where('pendidikan', '=', 'SMP')
-    ->whereBetween('created_at', [$startDate, $endDate])
-    ->whereIn('jenisPelayanan', $terms)
     ->get()
     ->count();
 
-$pendidikan_3 = DB::table('survey_responses')->where('tahun', $_GET['Tahun'] ?? date('Y'))
+$pendidikan_3 = \App\Support\SurveyFilter::query()
     ->where('pendidikan', '=', 'SMA / SMK')
-    ->whereBetween('created_at', [$startDate, $endDate])
-    ->whereIn('jenisPelayanan', $terms)
     ->get()
     ->count();
 
-$pendidikan_4 = DB::table('survey_responses')->where('tahun', $_GET['Tahun'] ?? date('Y'))
+$pendidikan_4 = \App\Support\SurveyFilter::query()
     ->where('pendidikan', '=', 'D-I / D-III')
-    ->whereBetween('created_at', [$startDate, $endDate])
-    ->whereIn('jenisPelayanan', $terms)
     ->get()
     ->count();
 
-$pendidikan_5 = DB::table('survey_responses')->where('tahun', $_GET['Tahun'] ?? date('Y'))
+$pendidikan_5 = \App\Support\SurveyFilter::query()
     ->where('pendidikan', '=', 'S1 / Setara')
-    ->whereBetween('created_at', [$startDate, $endDate])
-    ->whereIn('jenisPelayanan', $terms)
     ->get()
     ->count();
 
-$pendidikan_6 = DB::table('survey_responses')->where('tahun', $_GET['Tahun'] ?? date('Y'))
+$pendidikan_6 = \App\Support\SurveyFilter::query()
     ->where('pendidikan', '=', 'S2 / S3')
-    ->whereBetween('created_at', [$startDate, $endDate])
-    ->whereIn('jenisPelayanan', $terms)
     ->get()
     ->count();
 
@@ -163,18 +104,14 @@ for ($i = 1; $i <= 12; $i++) {
     for ($j = 1; $j <= 9; $j++) {
         $xyz = $indexTu[$j - 1];
         // echo $xyz;
-        $nilaiTu = DB::table('survey_responses')->where('tahun', $_GET['Tahun'] ?? date('Y'))
-
-    ->whereIn('jenisPelayanan', $terms)
+        $nilaiTu = \App\Support\SurveyFilter::query()
             ->whereBetween('created_at', [$startDate, $abc])
             ->get()
             ->sum($xyz);
         array_push($x, $nilaiTu);
     }
 
-    $nnn = DB::table('survey_responses')->where('tahun', $_GET['Tahun'] ?? date('Y'))
-
-    ->whereIn('jenisPelayanan', $terms)
+    $nnn = \App\Support\SurveyFilter::query()
         ->whereBetween('created_at', [$startDate, $abc])
         ->get()
         ->count();
@@ -211,7 +148,7 @@ for ($i = 1; $i <= 12; $i++) {
     $x;
     $y;
     for ($j = 1; $j <= 9; $j++) {
-        $nrrTx = $nrr[$i][$j - 1] * 0.111;
+        $nrrTx = $nrr[$i][$j - 1] * (1/9);
         array_push($x, round($nrrTx, 2));
         $y = $y + $nrrTx;
     }
@@ -232,69 +169,47 @@ for ($i = 0; $i <= 11; $i++) {
 
 // dd($nrrTT);
 
-$tu1 = DB::table('survey_responses')->where('tahun', $_GET['Tahun'] ?? date('Y'))
-    ->whereIn('jenisPelayanan', $terms)
-    ->whereBetween('created_at', [$startDate, $endDate])
+$tu1 = \App\Support\SurveyFilter::query()
     ->get()
     ->sum('u1');
 
-$tu2 = DB::table('survey_responses')->where('tahun', $_GET['Tahun'] ?? date('Y'))
-    ->whereIn('jenisPelayanan', $terms)
-    ->whereBetween('created_at', [$startDate, $endDate])
+$tu2 = \App\Support\SurveyFilter::query()
     ->get()
     ->sum('u2');
 
-$tu3 = DB::table('survey_responses')->where('tahun', $_GET['Tahun'] ?? date('Y'))
-    ->whereIn('jenisPelayanan', $terms)
-    ->whereBetween('created_at', [$startDate, $endDate])
+$tu3 = \App\Support\SurveyFilter::query()
     ->get()
     ->sum('u3');
 
-$tu4 = DB::table('survey_responses')->where('tahun', $_GET['Tahun'] ?? date('Y'))
-    ->whereIn('jenisPelayanan', $terms)
-    ->whereBetween('created_at', [$startDate, $endDate])
+$tu4 = \App\Support\SurveyFilter::query()
     ->get()
     ->sum('u4');
 
-$tu5 = DB::table('survey_responses')->where('tahun', $_GET['Tahun'] ?? date('Y'))
-    ->whereIn('jenisPelayanan', $terms)
-    ->whereBetween('created_at', [$startDate, $endDate])
+$tu5 = \App\Support\SurveyFilter::query()
     ->get()
     ->sum('u5');
 
-$tu6 = DB::table('survey_responses')->where('tahun', $_GET['Tahun'] ?? date('Y'))
-    ->whereIn('jenisPelayanan', $terms)
-    ->whereBetween('created_at', [$startDate, $endDate])
+$tu6 = \App\Support\SurveyFilter::query()
     ->get()
     ->sum('u6');
 
-$tu7 = DB::table('survey_responses')->where('tahun', $_GET['Tahun'] ?? date('Y'))
-    ->whereIn('jenisPelayanan', $terms)
-    ->whereBetween('created_at', [$startDate, $endDate])
+$tu7 = \App\Support\SurveyFilter::query()
     ->get()
     ->sum('u7');
 
-$tu8 = DB::table('survey_responses')->where('tahun', $_GET['Tahun'] ?? date('Y'))
-    ->whereIn('jenisPelayanan', $terms)
-    ->whereBetween('created_at', [$startDate, $endDate])
+$tu8 = \App\Support\SurveyFilter::query()
     ->get()
     ->sum('u8');
 
-$tu9 = DB::table('survey_responses')->where('tahun', $_GET['Tahun'] ?? date('Y'))
-    ->whereIn('jenisPelayanan', $terms)
-    ->whereBetween('created_at', [$startDate, $endDate])
+$tu9 = \App\Support\SurveyFilter::query()
     ->get()
     ->sum('u9');
 
-$n = DB::table('survey_responses')->where('tahun', $_GET['Tahun'] ?? date('Y'))
-    ->whereIn('jenisPelayanan', $terms)
-    ->whereBetween('created_at', [$startDate, $endDate])
+$n = \App\Support\SurveyFilter::query()
     ->get()
     ->count();
 
-$tu9 = DB::table('survey_responses')->where('tahun', $_GET['Tahun'] ?? date('Y'))
-    ->whereIn('jenisPelayanan', $terms)
-    ->whereBetween('created_at', [$startDate, $endDate])
+$tu9 = \App\Support\SurveyFilter::query()
     ->get()
     ->sum('u9');
 
@@ -347,15 +262,15 @@ if ($n == 0) {
     $nrr = $nrr1 + $nrr2 + $nrr3 + $nrr4 + $nrr5 + $nrr6 + $nrr7 + $nrr8 + $nrr9;
     $nrr = sprintf('%0.3f', $nrr);
 
-    $nrrt1 = sprintf('%0.3f', $nrr1 * 0.111);
-    $nrrt2 = sprintf('%0.3f', $nrr2 * 0.111);
-    $nrrt3 = sprintf('%0.3f', $nrr3 * 0.111);
-    $nrrt4 = sprintf('%0.3f', $nrr4 * 0.111);
-    $nrrt5 = sprintf('%0.3f', $nrr5 * 0.111);
-    $nrrt6 = sprintf('%0.3f', $nrr6 * 0.111);
-    $nrrt7 = sprintf('%0.3f', $nrr7 * 0.111);
-    $nrrt8 = sprintf('%0.3f', $nrr8 * 0.111);
-    $nrrt9 = sprintf('%0.3f', $nrr9 * 0.111);
+    $nrrt1 = sprintf('%0.3f', $nrr1 * (1/9));
+    $nrrt2 = sprintf('%0.3f', $nrr2 * (1/9));
+    $nrrt3 = sprintf('%0.3f', $nrr3 * (1/9));
+    $nrrt4 = sprintf('%0.3f', $nrr4 * (1/9));
+    $nrrt5 = sprintf('%0.3f', $nrr5 * (1/9));
+    $nrrt6 = sprintf('%0.3f', $nrr6 * (1/9));
+    $nrrt7 = sprintf('%0.3f', $nrr7 * (1/9));
+    $nrrt8 = sprintf('%0.3f', $nrr8 * (1/9));
+    $nrrt9 = sprintf('%0.3f', $nrr9 * (1/9));
 
     $nrrT = $nrrt1 + $nrrt2 + $nrrt3 + $nrrt4 + $nrrt5 + $nrrt6 + $nrrt7 + $nrrt8 + $nrrt9;
     $nrrT = sprintf('%0.3f', $nrrT);
@@ -367,7 +282,7 @@ if ($n == 0) {
 
     // if ($_GET['tw'] == '') {
     //     for ($x = 0; $x <= date('m'); $x++) {
-    //         $responden[$x][0] = DB::table('survey_responses')->where('tahun', $_GET['Tahun'] ?? date('Y'))
+    //         $responden[$x][0] = \App\Support\SurveyFilter::query()
     //             ->whereMonth('created_at', '=', $x + 1)
     //             ->get()
     //             ->count();
@@ -375,7 +290,7 @@ if ($n == 0) {
     //     }
     // } else {
     //     for ($x = 0; $x <= $_GET['tw']; $x++) {
-    //         $responden[$x][0] = DB::table('survey_responses')->where('tahun', $_GET['Tahun'] ?? date('Y'))
+    //         $responden[$x][0] = \App\Support\SurveyFilter::query()
     //             ->whereMonth('created_at', '=', $x + 1)
     //             ->get()
     //             ->count();
@@ -396,9 +311,7 @@ if ($n == 0) {
 }
 // echo $nrrTotal;
 // echo $nrrTertimbang;
-$jmlResponden = DB::table('survey_responses')->where('tahun', $_GET['Tahun'] ?? date('Y'))
-    ->whereIn('jenisPelayanan', $terms)
-    ->whereBetween('created_at', [$startDate, $endDate])
+$jmlResponden = \App\Support\SurveyFilter::query()
     ->get()
     ->count();
 

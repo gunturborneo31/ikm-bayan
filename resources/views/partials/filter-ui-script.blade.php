@@ -110,6 +110,19 @@
             loadingOverlay.classList.add('flex');
         };
 
+        window.hidePageLoading = () => {
+            if (!loadingOverlay) {
+                return;
+            }
+
+            loadingOverlay.classList.add('hidden');
+            loadingOverlay.classList.remove('flex');
+        };
+
+        // Saat kembali lewat tombol Back, browser memulihkan halaman dari cache
+        // (bfcache) lengkap dengan overlay yang masih tampil. Sembunyikan lagi.
+        window.addEventListener('pageshow', window.hidePageLoading);
+
         if (enableLoadingOverlay) {
             document.querySelectorAll(loadingNavSelector).forEach((link) => {
                 link.addEventListener('click', () => {

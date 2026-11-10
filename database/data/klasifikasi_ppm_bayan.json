@@ -1,0 +1,1579 @@
+{
+  "sumber": "Update_Filter_Desa_dan_Program_1.xlsx — tab \"Klasifikasi Perusahaan Atas PPM\" (penilai & catatan) + tab \"kerangka IKM\" (lokasi)",
+  "keterangan": {
+    "penilai": "Perusahaan yang diberi tanda √ di tab Klasifikasi. [\"BAYAN\"] = dinilai sebagai grup.",
+    "lokasi_per_perusahaan": "Lokasi dari tab kerangka IKM. desa = nama desa yang sudah diseragamkan; lokasi_lain = isian yang bukan nama desa (Ring 2/3, kecamatan, Desa Binaan).",
+    "jumlah_dalam_kurung": "Angka dalam kurung pada nama program, disalin apa adanya."
+  },
+  "perusahaan": [
+    {
+      "kode": "BAYAN",
+      "nama": "Bayan (grup)"
+    },
+    {
+      "kode": "BT",
+      "nama": "Bara Tabang"
+    },
+    {
+      "kode": "FSP",
+      "nama": "Fajar Sakti Prima"
+    },
+    {
+      "kode": "TA",
+      "nama": "Tabang Alas"
+    },
+    {
+      "kode": "TJ",
+      "nama": "Tiwa Jayan"
+    }
+  ],
+  "desa": [
+    "Abit",
+    "Buluq Sen",
+    "Dusun Ruang",
+    "Gunung Sari",
+    "Long Beleh Modang",
+    "Long Lalang",
+    "Muara Ritan",
+    "Muara Siran",
+    "Ritan Baru",
+    "Sebelang",
+    "Tanjung Pagar",
+    "Tukung Ritan",
+    "Umaq Dian"
+  ],
+  "pilar": [
+    {
+      "id": "P1",
+      "nama": "PENDIDIKAN",
+      "program": [
+        {
+          "id": "P1.1",
+          "nama": "Beasiswa",
+          "jumlah_dalam_kurung": 9,
+          "rincian": [
+            {
+              "id": "P1.1.1",
+              "nama": "Bantuan Pendidikan Untuk Siswa/I SD, SMP Berprestasi",
+              "penilai": [
+                "BAYAN"
+              ],
+              "dinilai_sebagai_grup": true,
+              "catatan": "Karena banyak irisan perusahaan didesa yang sama",
+              "lokasi_per_perusahaan": {
+                "FSP": {
+                  "desa": [
+                    "Umaq Dian",
+                    "Abit"
+                  ],
+                  "lokasi_lain": []
+                },
+                "BT": {
+                  "desa": [
+                    "Umaq Dian",
+                    "Buluq Sen",
+                    "Long Beleh Modang"
+                  ],
+                  "lokasi_lain": []
+                },
+                "TA": {
+                  "desa": [
+                    "Long Beleh Modang",
+                    "Gunung Sari"
+                  ],
+                  "lokasi_lain": []
+                },
+                "TJ": {
+                  "desa": [
+                    "Long Beleh Modang",
+                    "Gunung Sari"
+                  ],
+                  "lokasi_lain": []
+                }
+              }
+            },
+            {
+              "id": "P1.1.2",
+              "nama": "Beasiswa SMK Wikrama",
+              "penilai": [
+                "BAYAN"
+              ],
+              "dinilai_sebagai_grup": true,
+              "catatan": "Karena banyak irisan perusahaan didesa yang sama",
+              "lokasi_per_perusahaan": {
+                "FSP": {
+                  "desa": [],
+                  "lokasi_lain": [
+                    "Kec. Tabang"
+                  ]
+                },
+                "BT": {
+                  "desa": [],
+                  "lokasi_lain": [
+                    "Kec. Kembang Janggut"
+                  ]
+                },
+                "TA": {
+                  "desa": [
+                    "Tukung Ritan"
+                  ],
+                  "lokasi_lain": [
+                    "Kec. Tabang"
+                  ]
+                }
+              }
+            },
+            {
+              "id": "P1.1.3",
+              "nama": "Beasiswa S1",
+              "penilai": [
+                "BAYAN"
+              ],
+              "dinilai_sebagai_grup": true,
+              "catatan": "Karena banyak irisan perusahaan didesa yang sama",
+              "lokasi_per_perusahaan": {
+                "FSP": {
+                  "desa": [
+                    "Abit",
+                    "Sebelang",
+                    "Tanjung Pagar"
+                  ],
+                  "lokasi_lain": []
+                },
+                "BT": {
+                  "desa": [
+                    "Umaq Dian",
+                    "Buluq Sen",
+                    "Long Beleh Modang"
+                  ],
+                  "lokasi_lain": []
+                },
+                "TA": {
+                  "desa": [
+                    "Gunung Sari",
+                    "Long Beleh Modang",
+                    "Buluq Sen",
+                    "Ritan Baru"
+                  ],
+                  "lokasi_lain": []
+                },
+                "TJ": {
+                  "desa": [
+                    "Long Beleh Modang",
+                    "Gunung Sari"
+                  ],
+                  "lokasi_lain": []
+                }
+              }
+            },
+            {
+              "id": "P1.1.4",
+              "nama": "Beasiswa PEP Bandung",
+              "penilai": [
+                "BAYAN"
+              ],
+              "dinilai_sebagai_grup": true,
+              "catatan": "Karena banyak irisan perusahaan didesa yang sama",
+              "lokasi_per_perusahaan": {
+                "BT": {
+                  "desa": [],
+                  "lokasi_lain": [
+                    "Kec. Kembang Janggut",
+                    "Kec. Tabang"
+                  ]
+                },
+                "TA": {
+                  "desa": [
+                    "Buluq Sen",
+                    "Umaq Dian",
+                    "Gunung Sari"
+                  ],
+                  "lokasi_lain": []
+                }
+              }
+            },
+            {
+              "id": "P1.1.5",
+              "nama": "Beasiswa Anak Berkebutuhan Khusus",
+              "penilai": [
+                "BAYAN"
+              ],
+              "dinilai_sebagai_grup": true,
+              "catatan": "Karena banyak irisan perusahaan didesa yang sama",
+              "lokasi_per_perusahaan": {
+                "BT": {
+                  "desa": [
+                    "Gunung Sari"
+                  ],
+                  "lokasi_lain": []
+                }
+              }
+            }
+          ]
+        },
+        {
+          "id": "P1.2",
+          "nama": "Bantuan Tenaga Pendidik",
+          "jumlah_dalam_kurung": 4,
+          "rincian": [
+            {
+              "id": "P1.2.1",
+              "nama": "Honorer Guru",
+              "penilai": [
+                "FSP",
+                "TA"
+              ],
+              "dinilai_sebagai_grup": false,
+              "catatan": "Cross check tanya guru penerima bantuan dan tanya ke masyarakat atas kinerja gurunya",
+              "lokasi_per_perusahaan": {
+                "FSP": {
+                  "desa": [
+                    "Dusun Ruang",
+                    "Tanjung Pagar"
+                  ],
+                  "lokasi_lain": []
+                },
+                "BT": {
+                  "desa": [],
+                  "lokasi_lain": [
+                    "Ring 2"
+                  ]
+                },
+                "TA": {
+                  "desa": [
+                    "Ritan Baru",
+                    "Gunung Sari"
+                  ],
+                  "lokasi_lain": []
+                }
+              }
+            }
+          ]
+        },
+        {
+          "id": "P1.3",
+          "nama": "Pendidikan, Pelatihan Keterampilan dan Keahlian Dasar",
+          "jumlah_dalam_kurung": 8,
+          "rincian": [
+            {
+              "id": "P1.3.1",
+              "nama": "Pendampingan hidroponik buah dan Program Keahlian lainnya untuk penyandang disabilitas",
+              "penilai": [
+                "TA"
+              ],
+              "dinilai_sebagai_grup": false,
+              "catatan": null,
+              "lokasi_per_perusahaan": {
+                "TA": {
+                  "desa": [
+                    "Gunung Sari",
+                    "Buluq Sen",
+                    "Long Beleh Modang",
+                    "Ritan Baru",
+                    "Umaq Dian"
+                  ],
+                  "lokasi_lain": []
+                }
+              }
+            },
+            {
+              "id": "P1.3.2",
+              "nama": "Pengembangan dan Optimalisasi Pengelolaan Bank Sampah Muara Ritan Tahap 2",
+              "penilai": [
+                "TA"
+              ],
+              "dinilai_sebagai_grup": false,
+              "catatan": null,
+              "lokasi_per_perusahaan": {
+                "TA": {
+                  "desa": [
+                    "Muara Ritan"
+                  ],
+                  "lokasi_lain": []
+                }
+              }
+            }
+          ]
+        },
+        {
+          "id": "P1.4",
+          "nama": "Bantuan Sarana atau Prasarana Pendidikan",
+          "jumlah_dalam_kurung": 5,
+          "rincian": [
+            {
+              "id": "P1.4.1",
+              "nama": "Renovasi dan Pembangunan Sekolah, SD/SMP/SMA",
+              "penilai": [
+                "FSP",
+                "TA",
+                "TJ"
+              ],
+              "dinilai_sebagai_grup": false,
+              "catatan": null,
+              "lokasi_per_perusahaan": {
+                "FSP": {
+                  "desa": [
+                    "Dusun Ruang"
+                  ],
+                  "lokasi_lain": []
+                },
+                "BT": {
+                  "desa": [],
+                  "lokasi_lain": [
+                    "Ring 2"
+                  ]
+                },
+                "TA": {
+                  "desa": [
+                    "Ritan Baru"
+                  ],
+                  "lokasi_lain": []
+                },
+                "TJ": {
+                  "desa": [
+                    "Long Beleh Modang"
+                  ],
+                  "lokasi_lain": []
+                }
+              }
+            },
+            {
+              "id": "P1.4.2",
+              "nama": "Pembangunan SMK Bayan",
+              "penilai": [],
+              "dinilai_sebagai_grup": false,
+              "catatan": "Apakah sudah berjalan ?",
+              "lokasi_per_perusahaan": {
+                "BT": {
+                  "desa": [
+                    "Tukung Ritan"
+                  ],
+                  "lokasi_lain": []
+                },
+                "TA": {
+                  "desa": [
+                    "Tukung Ritan"
+                  ],
+                  "lokasi_lain": []
+                }
+              }
+            },
+            {
+              "id": "P1.4.3",
+              "nama": "Pembangunan Gedung TPA",
+              "penilai": [
+                "FSP"
+              ],
+              "dinilai_sebagai_grup": false,
+              "catatan": null,
+              "lokasi_per_perusahaan": {
+                "FSP": {
+                  "desa": [
+                    "Sebelang"
+                  ],
+                  "lokasi_lain": []
+                }
+              }
+            },
+            {
+              "id": "P1.4.4",
+              "nama": "Biaya Operasional Rumah Belajar",
+              "penilai": [
+                "FSP"
+              ],
+              "dinilai_sebagai_grup": false,
+              "catatan": null,
+              "lokasi_per_perusahaan": {
+                "FSP": {
+                  "desa": [
+                    "Dusun Ruang"
+                  ],
+                  "lokasi_lain": []
+                }
+              }
+            }
+          ]
+        },
+        {
+          "id": "P1.5",
+          "nama": "Pelatihan dan Kemandirian Masyarakat",
+          "jumlah_dalam_kurung": 7,
+          "rincian": [
+            {
+              "id": "P1.5.1",
+              "nama": "Pelatihan Ketrampilan Berbasis Kompetensi bagi putra putri Lulusan SMA / SMK sederajat (Hospitality)",
+              "penilai": [
+                "FSP",
+                "TA",
+                "TJ"
+              ],
+              "dinilai_sebagai_grup": false,
+              "catatan": null,
+              "lokasi_per_perusahaan": {
+                "FSP": {
+                  "desa": [
+                    "Tanjung Pagar",
+                    "Sebelang",
+                    "Abit"
+                  ],
+                  "lokasi_lain": []
+                },
+                "BT": {
+                  "desa": [],
+                  "lokasi_lain": [
+                    "Ring 2"
+                  ]
+                },
+                "TA": {
+                  "desa": [
+                    "Buluq Sen",
+                    "Gunung Sari",
+                    "Ritan Baru"
+                  ],
+                  "lokasi_lain": []
+                },
+                "TJ": {
+                  "desa": [
+                    "Long Beleh Modang"
+                  ],
+                  "lokasi_lain": []
+                }
+              }
+            },
+            {
+              "id": "P1.5.2",
+              "nama": "Pelatihan Pengelolaan Sampah Domestik dan Pembuatan Kompos",
+              "penilai": [
+                "FSP"
+              ],
+              "dinilai_sebagai_grup": false,
+              "catatan": null,
+              "lokasi_per_perusahaan": {
+                "FSP": {
+                  "desa": [
+                    "Tanjung Pagar"
+                  ],
+                  "lokasi_lain": []
+                }
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "P2",
+      "nama": "KESEHATAN",
+      "program": [
+        {
+          "id": "P2.1",
+          "nama": "Kesehatan Masyarakat Sekitar Tambang",
+          "jumlah_dalam_kurung": 12,
+          "rincian": [
+            {
+              "id": "P2.1.1",
+              "nama": "Pemberian program makanan tambahan untuk Balita & Ibu Hamil dan Menyusui",
+              "penilai": [
+                "BAYAN"
+              ],
+              "dinilai_sebagai_grup": true,
+              "catatan": "Karena banyak irisan perusahaan didesa yang sama",
+              "lokasi_per_perusahaan": {
+                "FSP": {
+                  "desa": [
+                    "Abit",
+                    "Tanjung Pagar",
+                    "Sebelang"
+                  ],
+                  "lokasi_lain": []
+                },
+                "BT": {
+                  "desa": [],
+                  "lokasi_lain": [
+                    "Ring 2"
+                  ]
+                },
+                "TA": {
+                  "desa": [
+                    "Gunung Sari",
+                    "Long Beleh Modang",
+                    "Buluq Sen",
+                    "Ritan Baru",
+                    "Tukung Ritan"
+                  ],
+                  "lokasi_lain": []
+                },
+                "TJ": {
+                  "desa": [],
+                  "lokasi_lain": [
+                    "Ring 2"
+                  ]
+                }
+              }
+            },
+            {
+              "id": "P2.1.2",
+              "nama": "Program Pengobatan",
+              "penilai": [
+                "BAYAN"
+              ],
+              "dinilai_sebagai_grup": true,
+              "catatan": "Karena banyak irisan perusahaan didesa yang sama",
+              "lokasi_per_perusahaan": {
+                "FSP": {
+                  "desa": [
+                    "Gunung Sari",
+                    "Umaq Dian",
+                    "Abit",
+                    "Tanjung Pagar"
+                  ],
+                  "lokasi_lain": []
+                },
+                "BT": {
+                  "desa": [
+                    "Buluq Sen",
+                    "Umaq Dian",
+                    "Long Beleh Modang"
+                  ],
+                  "lokasi_lain": []
+                },
+                "TJ": {
+                  "desa": [
+                    "Gunung Sari",
+                    "Long Beleh Modang"
+                  ],
+                  "lokasi_lain": []
+                }
+              }
+            },
+            {
+              "id": "P2.1.3",
+              "nama": "Program Bayan Peduli Stunting",
+              "penilai": [
+                "BAYAN"
+              ],
+              "dinilai_sebagai_grup": true,
+              "catatan": "Karena banyak irisan perusahaan didesa yang sama",
+              "lokasi_per_perusahaan": {
+                "FSP": {
+                  "desa": [
+                    "Abit",
+                    "Tanjung Pagar",
+                    "Sebelang"
+                  ],
+                  "lokasi_lain": []
+                },
+                "BT": {
+                  "desa": [
+                    "Long Beleh Modang"
+                  ],
+                  "lokasi_lain": []
+                },
+                "TA": {
+                  "desa": [],
+                  "lokasi_lain": [
+                    "Ring 2"
+                  ]
+                },
+                "TJ": {
+                  "desa": [],
+                  "lokasi_lain": [
+                    "Ring 2"
+                  ]
+                }
+              }
+            },
+            {
+              "id": "P2.1.4",
+              "nama": "Program 1 Day 1 Egg (selama 60 hari) bagi anak anak usia sekolah Paud/ TK/SD",
+              "penilai": [
+                "BAYAN"
+              ],
+              "dinilai_sebagai_grup": true,
+              "catatan": "Karena banyak irisan perusahaan didesa yang sama",
+              "lokasi_per_perusahaan": {
+                "FSP": {
+                  "desa": [
+                    "Dusun Ruang",
+                    "Sebelang",
+                    "Abit"
+                  ],
+                  "lokasi_lain": [
+                    "Tj. Pagar"
+                  ]
+                },
+                "BT": {
+                  "desa": [
+                    "Buluq Sen"
+                  ],
+                  "lokasi_lain": []
+                },
+                "TA": {
+                  "desa": [
+                    "Ritan Baru",
+                    "Tukung Ritan",
+                    "Long Beleh Modang"
+                  ],
+                  "lokasi_lain": []
+                },
+                "TJ": {
+                  "desa": [
+                    "Gunung Sari"
+                  ],
+                  "lokasi_lain": []
+                }
+              }
+            },
+            {
+              "id": "P2.1.5",
+              "nama": "Program Bakti Sosial Yaitu Pemeriksaan Kesehatan Mata dan Pemberian Kacamata Gratis",
+              "penilai": [
+                "TJ"
+              ],
+              "dinilai_sebagai_grup": false,
+              "catatan": null,
+              "lokasi_per_perusahaan": {
+                "TA": {
+                  "desa": [],
+                  "lokasi_lain": [
+                    "Ring 2"
+                  ]
+                },
+                "TJ": {
+                  "desa": [
+                    "Long Beleh Modang",
+                    "Gunung Sari"
+                  ],
+                  "lokasi_lain": []
+                }
+              }
+            }
+          ]
+        },
+        {
+          "id": "P2.2",
+          "nama": "Tenaga Kesehatan",
+          "jumlah_dalam_kurung": 2,
+          "rincian": [
+            {
+              "id": "P2.2.1",
+              "nama": "Pelatihan kesehatan untuk kader posyandu dan petugas kesehatan",
+              "penilai": [
+                "TJ"
+              ],
+              "dinilai_sebagai_grup": false,
+              "catatan": null,
+              "lokasi_per_perusahaan": {
+                "BT": {
+                  "desa": [],
+                  "lokasi_lain": [
+                    "Ring 2"
+                  ]
+                },
+                "TJ": {
+                  "desa": [
+                    "Gunung Sari",
+                    "Long Lalang"
+                  ],
+                  "lokasi_lain": []
+                }
+              }
+            }
+          ]
+        },
+        {
+          "id": "P2.3",
+          "nama": "Sarana dan prasarana kesehatan",
+          "jumlah_dalam_kurung": 4,
+          "rincian": [
+            {
+              "id": "P2.3.1",
+              "nama": "Pengadaan Sarana dan Prasarana Kesehatan",
+              "penilai": [
+                "FSP",
+                "TJ"
+              ],
+              "dinilai_sebagai_grup": false,
+              "catatan": null,
+              "lokasi_per_perusahaan": {
+                "FSP": {
+                  "desa": [
+                    "Umaq Dian"
+                  ],
+                  "lokasi_lain": []
+                },
+                "BT": {
+                  "desa": [],
+                  "lokasi_lain": [
+                    "Ring 3"
+                  ]
+                },
+                "TA": {
+                  "desa": [],
+                  "lokasi_lain": [
+                    "Ring 3"
+                  ]
+                },
+                "TJ": {
+                  "desa": [
+                    "Gunung Sari",
+                    "Long Beleh Modang"
+                  ],
+                  "lokasi_lain": []
+                }
+              }
+            },
+            {
+              "id": "P2.3.2",
+              "nama": "Pembangunan Sanitasi",
+              "penilai": [
+                "FSP",
+                "TJ"
+              ],
+              "dinilai_sebagai_grup": false,
+              "catatan": null,
+              "lokasi_per_perusahaan": {
+                "FSP": {
+                  "desa": [
+                    "Tanjung Pagar"
+                  ],
+                  "lokasi_lain": []
+                },
+                "BT": {
+                  "desa": [],
+                  "lokasi_lain": [
+                    "Ring 2"
+                  ]
+                },
+                "TJ": {
+                  "desa": [
+                    "Long Beleh Modang"
+                  ],
+                  "lokasi_lain": []
+                }
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "P3",
+      "nama": "TINGKAT PENDAPATAN RIIL",
+      "program": [
+        {
+          "id": "P3.1",
+          "nama": "Pertanian",
+          "jumlah_dalam_kurung": 5,
+          "rincian": [
+            {
+              "id": "P3.1.1",
+              "nama": "Lanjutan pengembangan persawahan Kelompok Tani Sinar Jaya (Program Multiyears 2023 - 2026)",
+              "penilai": [
+                "FSP"
+              ],
+              "dinilai_sebagai_grup": false,
+              "catatan": null,
+              "lokasi_per_perusahaan": {
+                "FSP": {
+                  "desa": [
+                    "Tukung Ritan",
+                    "Ritan Baru"
+                  ],
+                  "lokasi_lain": []
+                }
+              }
+            },
+            {
+              "id": "P3.1.2",
+              "nama": "Pembangunan Tempat Gilingan Padi Kelompok Tani Harapan Bersama Ukuran 4 x 6",
+              "penilai": [
+                "FSP"
+              ],
+              "dinilai_sebagai_grup": false,
+              "catatan": null,
+              "lokasi_per_perusahaan": {
+                "FSP": {
+                  "desa": [
+                    "Sebelang"
+                  ],
+                  "lokasi_lain": []
+                }
+              }
+            },
+            {
+              "id": "P3.1.3",
+              "nama": "Pengembangan Konsep Rumah Pangan Lestari untuk Masyarakat",
+              "penilai": [
+                "FSP"
+              ],
+              "dinilai_sebagai_grup": false,
+              "catatan": null,
+              "lokasi_per_perusahaan": {
+                "FSP": {
+                  "desa": [
+                    "Muara Ritan"
+                  ],
+                  "lokasi_lain": []
+                }
+              }
+            },
+            {
+              "id": "P3.1.4",
+              "nama": "Program pengembangan pertanian sayuran & buah",
+              "penilai": [
+                "BT"
+              ],
+              "dinilai_sebagai_grup": false,
+              "catatan": null,
+              "lokasi_per_perusahaan": {
+                "BT": {
+                  "desa": [
+                    "Buluq Sen"
+                  ],
+                  "lokasi_lain": []
+                }
+              }
+            }
+          ]
+        },
+        {
+          "id": "P3.2",
+          "nama": "Peternakan",
+          "jumlah_dalam_kurung": 5,
+          "rincian": [
+            {
+              "id": "P3.2.1",
+              "nama": "Lanjutan Peternakan Kambing",
+              "penilai": [
+                "FSP"
+              ],
+              "dinilai_sebagai_grup": false,
+              "catatan": null,
+              "lokasi_per_perusahaan": {
+                "FSP": {
+                  "desa": [
+                    "Tanjung Pagar"
+                  ],
+                  "lokasi_lain": []
+                }
+              }
+            },
+            {
+              "id": "P3.2.2",
+              "nama": "Budidaya Perternakan Ayam Petelur",
+              "penilai": [
+                "FSP",
+                "BT"
+              ],
+              "dinilai_sebagai_grup": false,
+              "catatan": null,
+              "lokasi_per_perusahaan": {
+                "FSP": {
+                  "desa": [
+                    "Umaq Dian"
+                  ],
+                  "lokasi_lain": []
+                },
+                "BT": {
+                  "desa": [
+                    "Buluq Sen"
+                  ],
+                  "lokasi_lain": []
+                }
+              }
+            },
+            {
+              "id": "P3.2.3",
+              "nama": "Budidaya Peternakan Babi",
+              "penilai": [
+                "FSP",
+                "TA",
+                "TJ"
+              ],
+              "dinilai_sebagai_grup": false,
+              "catatan": null,
+              "lokasi_per_perusahaan": {
+                "FSP": {
+                  "desa": [
+                    "Umaq Dian"
+                  ],
+                  "lokasi_lain": []
+                },
+                "BT": {
+                  "desa": [],
+                  "lokasi_lain": [
+                    "Ring 2"
+                  ]
+                },
+                "TA": {
+                  "desa": [
+                    "Tukung Ritan"
+                  ],
+                  "lokasi_lain": []
+                },
+                "TJ": {
+                  "desa": [
+                    "Long Beleh Modang"
+                  ],
+                  "lokasi_lain": []
+                }
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "P4",
+      "nama": "KEMANDIRIAN EKONOMI",
+      "program": [
+        {
+          "id": "P4.1",
+          "nama": "Pengutamaan Penggunaan Tenaga Kerja Masyarakat Sekitar Tambang Sesuai Dengan Kompetensi",
+          "jumlah_dalam_kurung": 10,
+          "rincian": [
+            {
+              "id": "P4.1.1",
+              "nama": "Program OJT (Magang)",
+              "penilai": [
+                "FSP",
+                "TA",
+                "TJ"
+              ],
+              "dinilai_sebagai_grup": false,
+              "catatan": "Siapa yang ditanya ? Yang magangkah ? Atau masyarakat atas penawaran program",
+              "lokasi_per_perusahaan": {
+                "FSP": {
+                  "desa": [
+                    "Abit",
+                    "Sebelang",
+                    "Tanjung Pagar",
+                    "Umaq Dian",
+                    "Ritan Baru",
+                    "Long Lalang"
+                  ],
+                  "lokasi_lain": []
+                },
+                "TA": {
+                  "desa": [
+                    "Gunung Sari",
+                    "Long Beleh Modang",
+                    "Buluq Sen",
+                    "Ritan Baru"
+                  ],
+                  "lokasi_lain": []
+                },
+                "TJ": {
+                  "desa": [
+                    "Long Beleh Modang",
+                    "Gunung Sari"
+                  ],
+                  "lokasi_lain": []
+                }
+              }
+            },
+            {
+              "id": "P4.1.2",
+              "nama": "Festival Danau Siran",
+              "penilai": [
+                "BT"
+              ],
+              "dinilai_sebagai_grup": false,
+              "catatan": "Masyarakat yang terlibat festival atau ?",
+              "lokasi_per_perusahaan": {
+                "BT": {
+                  "desa": [
+                    "Muara Siran"
+                  ],
+                  "lokasi_lain": []
+                }
+              }
+            }
+          ]
+        },
+        {
+          "id": "P4.2",
+          "nama": "Peningkatan Kapasitas dan Akses Masyarakat Setempat Dalam Usaha Kecil dan Menengah",
+          "jumlah_dalam_kurung": 4,
+          "rincian": [
+            {
+              "id": "P4.2.1",
+              "nama": "Bantuan Pemberian Peralatan dan Perlengkapan Usaha Bagi Pedagang Kecil",
+              "penilai": [
+                "FSP",
+                "TA",
+                "TJ"
+              ],
+              "dinilai_sebagai_grup": false,
+              "catatan": null,
+              "lokasi_per_perusahaan": {
+                "FSP": {
+                  "desa": [
+                    "Long Lalang"
+                  ],
+                  "lokasi_lain": []
+                },
+                "BT": {
+                  "desa": [],
+                  "lokasi_lain": [
+                    "Ring 2"
+                  ]
+                },
+                "TA": {
+                  "desa": [
+                    "Muara Ritan",
+                    "Buluq Sen"
+                  ],
+                  "lokasi_lain": []
+                },
+                "TJ": {
+                  "desa": [
+                    "Long Beleh Modang"
+                  ],
+                  "lokasi_lain": []
+                }
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "P5",
+      "nama": "SOSIAL & BUDAYA",
+      "program": [
+        {
+          "id": "P5.1",
+          "nama": "Bantuan pembangunan sarana dan/atau prasarana ibadah dan hubungan di bidang keagamaan",
+          "jumlah_dalam_kurung": 4,
+          "rincian": [
+            {
+              "id": "P5.1.1",
+              "nama": "Pengadaan Sarana dan Prasarana Ibadah",
+              "penilai": [
+                "FSP"
+              ],
+              "dinilai_sebagai_grup": false,
+              "catatan": null,
+              "lokasi_per_perusahaan": {
+                "FSP": {
+                  "desa": [
+                    "Tanjung Pagar",
+                    "Umaq Dian"
+                  ],
+                  "lokasi_lain": []
+                },
+                "BT": {
+                  "desa": [],
+                  "lokasi_lain": [
+                    "Ring 2"
+                  ]
+                }
+              }
+            },
+            {
+              "id": "P5.1.2",
+              "nama": "Pembangunan Sarana dan Prasarana Ibadah",
+              "penilai": [
+                "BT",
+                "TA",
+                "TJ"
+              ],
+              "dinilai_sebagai_grup": false,
+              "catatan": "ada irisan di 3 perusahaan, apakah dirumah ibadah yang sama ?",
+              "lokasi_per_perusahaan": {
+                "FSP": {
+                  "desa": [],
+                  "lokasi_lain": [
+                    "Ring 2"
+                  ]
+                },
+                "BT": {
+                  "desa": [
+                    "Long Beleh Modang"
+                  ],
+                  "lokasi_lain": []
+                },
+                "TA": {
+                  "desa": [
+                    "Long Beleh Modang",
+                    "Long Lalang"
+                  ],
+                  "lokasi_lain": []
+                },
+                "TJ": {
+                  "desa": [
+                    "Long Beleh Modang"
+                  ],
+                  "lokasi_lain": []
+                }
+              }
+            }
+          ]
+        },
+        {
+          "id": "P5.2",
+          "nama": "Bantuan Sosial Lainnya",
+          "jumlah_dalam_kurung": 2,
+          "rincian": [
+            {
+              "id": "P5.2.1",
+              "nama": "Bantuan Operasional Untuk Lembaga Kesejahteraan Sosial Anak (LKSA) Bayan Berbagi Asa",
+              "penilai": [
+                "TA"
+              ],
+              "dinilai_sebagai_grup": false,
+              "catatan": null,
+              "lokasi_per_perusahaan": {
+                "TA": {
+                  "desa": [],
+                  "lokasi_lain": [
+                    "Kec. Tabang",
+                    "Kec Loa Janan"
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "id": "P5.3",
+          "nama": "Partisipasi Dalam Pelestarian Budaya Dan Kearifan Lokal Setempat",
+          "jumlah_dalam_kurung": 7,
+          "rincian": [
+            {
+              "id": "P5.3.1",
+              "nama": "Pembangunan Gedung Budaya",
+              "penilai": [
+                "TA"
+              ],
+              "dinilai_sebagai_grup": false,
+              "catatan": null,
+              "lokasi_per_perusahaan": {
+                "FSP": {
+                  "desa": [],
+                  "lokasi_lain": [
+                    "Ring 2"
+                  ]
+                },
+                "TA": {
+                  "desa": [
+                    "Gunung Sari",
+                    "Tukung Ritan"
+                  ],
+                  "lokasi_lain": []
+                },
+                "TJ": {
+                  "desa": [],
+                  "lokasi_lain": [
+                    "Ring 2"
+                  ]
+                }
+              }
+            },
+            {
+              "id": "P5.3.2",
+              "nama": "Kontribusi acara adat",
+              "penilai": [
+                "FSP",
+                "BT",
+                "TA",
+                "TJ"
+              ],
+              "dinilai_sebagai_grup": false,
+              "catatan": "Charity atau CSR/PPM ?",
+              "lokasi_per_perusahaan": {
+                "FSP": {
+                  "desa": [
+                    "Umaq Dian",
+                    "Buluq Sen",
+                    "Tukung Ritan",
+                    "Muara Ritan"
+                  ],
+                  "lokasi_lain": []
+                },
+                "BT": {
+                  "desa": [
+                    "Buluq Sen",
+                    "Umaq Dian",
+                    "Long Beleh Modang"
+                  ],
+                  "lokasi_lain": []
+                },
+                "TA": {
+                  "desa": [
+                    "Buluq Sen",
+                    "Ritan Baru",
+                    "Long Beleh Modang"
+                  ],
+                  "lokasi_lain": []
+                },
+                "TJ": {
+                  "desa": [
+                    "Long Beleh Modang",
+                    "Gunung Sari"
+                  ],
+                  "lokasi_lain": []
+                }
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "P6",
+      "nama": "PEMBERIAN KESEMPATAN KEPADA MASYARAKAT SETEMPAT UNTUK IKUT BERPARTISIPASI DALAM PENGELOLAAN LINGKUNGAN KEHIDUPAN MASYARAKAT SEKITAR TAMBANG",
+      "program": [
+        {
+          "id": "P6.1",
+          "nama": "Lingkungan",
+          "jumlah_dalam_kurung": 5,
+          "rincian": [
+            {
+              "id": "P6.1.1",
+              "nama": "Program pembuatan kompos dari kotoran ternak",
+              "penilai": [
+                "BT"
+              ],
+              "dinilai_sebagai_grup": false,
+              "catatan": null,
+              "lokasi_per_perusahaan": {
+                "BT": {
+                  "desa": [
+                    "Buluq Sen"
+                  ],
+                  "lokasi_lain": []
+                }
+              }
+            },
+            {
+              "id": "P6.1.2",
+              "nama": "Program Restocking Fish",
+              "penilai": [
+                "BT"
+              ],
+              "dinilai_sebagai_grup": false,
+              "catatan": null,
+              "lokasi_per_perusahaan": {
+                "BT": {
+                  "desa": [
+                    "Muara Siran"
+                  ],
+                  "lokasi_lain": []
+                },
+                "TA": {
+                  "desa": [],
+                  "lokasi_lain": [
+                    "Ring 3"
+                  ]
+                }
+              }
+            },
+            {
+              "id": "P6.1.3",
+              "nama": "Sekolah Adiwiyata SMP Negeri 02 Tabang (Tahap II)",
+              "penilai": [
+                "TA"
+              ],
+              "dinilai_sebagai_grup": false,
+              "catatan": "Sudah dapat titel Adiwiyata kah ?",
+              "lokasi_per_perusahaan": {
+                "TA": {
+                  "desa": [
+                    "Tukung Ritan"
+                  ],
+                  "lokasi_lain": []
+                }
+              }
+            },
+            {
+              "id": "P6.1.4",
+              "nama": "Program Pembuatan Implementasi IPAL komunal bagi Lingkungan Masyarakat dan Program MCK",
+              "penilai": [
+                "TA"
+              ],
+              "dinilai_sebagai_grup": false,
+              "catatan": null,
+              "lokasi_per_perusahaan": {
+                "TA": {
+                  "desa": [
+                    "Gunung Sari"
+                  ],
+                  "lokasi_lain": []
+                }
+              }
+            },
+            {
+              "id": "P6.1.5",
+              "nama": "Program Reboisasi Hutan Milik Desa/Hutan Adat",
+              "penilai": [
+                "TA"
+              ],
+              "dinilai_sebagai_grup": false,
+              "catatan": null,
+              "lokasi_per_perusahaan": {
+                "TA": {
+                  "desa": [
+                    "Ritan Baru"
+                  ],
+                  "lokasi_lain": []
+                }
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "P7",
+      "nama": "PEMBENTUKAN KELEMBAGAAN KOMUNITAS MASYARAKAT DALAM MENUNJANG KEMANDIRIAN PPM",
+      "program": [
+        {
+          "id": "P7.1",
+          "nama": "Kelembagaan",
+          "jumlah_dalam_kurung": 4,
+          "rincian": [
+            {
+              "id": "P7.1.1",
+              "nama": "Kegiatan Monitoring dan Evaluasi (Monev) Program PPM",
+              "penilai": [
+                "FSP",
+                "BT",
+                "TA",
+                "TJ"
+              ],
+              "dinilai_sebagai_grup": false,
+              "catatan": "Siapa yang mau dinilai ? Siapa pelaku Monev ?",
+              "lokasi_per_perusahaan": {
+                "FSP": {
+                  "desa": [],
+                  "lokasi_lain": [
+                    "Desa Binaan"
+                  ]
+                },
+                "BT": {
+                  "desa": [],
+                  "lokasi_lain": [
+                    "Desa Binaan"
+                  ]
+                },
+                "TA": {
+                  "desa": [],
+                  "lokasi_lain": [
+                    "Desa Binaan"
+                  ]
+                },
+                "TJ": {
+                  "desa": [],
+                  "lokasi_lain": [
+                    "Desa Binaan"
+                  ]
+                }
+              }
+            },
+            {
+              "id": "P7.1.2",
+              "nama": "Bimbingan Teknis Peningkatan Kapasitas Aparatur Desa/Kampung/Bumdes",
+              "penilai": [
+                "TA"
+              ],
+              "dinilai_sebagai_grup": false,
+              "catatan": "Apa kegiatannya ? Siapa yang menginsiasi kegiatan ?",
+              "lokasi_per_perusahaan": {
+                "TA": {
+                  "desa": [
+                    "Buluq Sen",
+                    "Gunung Sari",
+                    "Long Beleh Modang",
+                    "Ritan Baru"
+                  ],
+                  "lokasi_lain": []
+                }
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "P8",
+      "nama": "INFRASTRUKTUR UNTUK MENUNJANG PEMBANGUNAN",
+      "program": [
+        {
+          "id": "P8.1",
+          "nama": "Infrastruktur",
+          "jumlah_dalam_kurung": 7,
+          "rincian": [
+            {
+              "id": "P8.1.1",
+              "nama": "Program Peningkatan Jaringan Komunikasi dan Internet Melalui Pembangunan Tower Telkomsel",
+              "penilai": [
+                "FSP",
+                "TA"
+              ],
+              "dinilai_sebagai_grup": false,
+              "catatan": null,
+              "lokasi_per_perusahaan": {
+                "FSP": {
+                  "desa": [
+                    "Umaq Dian"
+                  ],
+                  "lokasi_lain": []
+                },
+                "TA": {
+                  "desa": [
+                    "Ritan Baru",
+                    "Gunung Sari",
+                    "Tukung Ritan",
+                    "Umaq Dian",
+                    "Long Beleh Modang",
+                    "Buluq Sen"
+                  ],
+                  "lokasi_lain": []
+                }
+              }
+            },
+            {
+              "id": "P8.1.2",
+              "nama": "Rehap/Bedah Rumah Layak Huni Bagi Warga Yang Tidak Mampu",
+              "penilai": [
+                "FSP"
+              ],
+              "dinilai_sebagai_grup": false,
+              "catatan": null,
+              "lokasi_per_perusahaan": {
+                "FSP": {
+                  "desa": [
+                    "Tanjung Pagar"
+                  ],
+                  "lokasi_lain": []
+                }
+              }
+            },
+            {
+              "id": "P8.1.3",
+              "nama": "Perbaikan Jalan",
+              "penilai": [
+                "FSP",
+                "TA"
+              ],
+              "dinilai_sebagai_grup": false,
+              "catatan": null,
+              "lokasi_per_perusahaan": {
+                "FSP": {
+                  "desa": [
+                    "Buluq Sen",
+                    "Umaq Dian"
+                  ],
+                  "lokasi_lain": []
+                },
+                "TA": {
+                  "desa": [
+                    "Gunung Sari"
+                  ],
+                  "lokasi_lain": []
+                },
+                "TJ": {
+                  "desa": [],
+                  "lokasi_lain": [
+                    "Ring 2"
+                  ]
+                }
+              }
+            },
+            {
+              "id": "P8.1.4",
+              "nama": "Program Air Bersih",
+              "penilai": [
+                "TA",
+                "TJ"
+              ],
+              "dinilai_sebagai_grup": false,
+              "catatan": null,
+              "lokasi_per_perusahaan": {
+                "BT": {
+                  "desa": [],
+                  "lokasi_lain": [
+                    "Ring 2"
+                  ]
+                },
+                "TA": {
+                  "desa": [
+                    "Gunung Sari",
+                    "Long Beleh Modang",
+                    "Tukung Ritan",
+                    "Ritan Baru"
+                  ],
+                  "lokasi_lain": []
+                },
+                "TJ": {
+                  "desa": [
+                    "Long Beleh Modang"
+                  ],
+                  "lokasi_lain": []
+                }
+              }
+            },
+            {
+              "id": "P8.1.5",
+              "nama": "Program Renovasi Kantor BPD Gunung Sari",
+              "penilai": [
+                "TA"
+              ],
+              "dinilai_sebagai_grup": false,
+              "catatan": null,
+              "lokasi_per_perusahaan": {
+                "TA": {
+                  "desa": [
+                    "Gunung Sari"
+                  ],
+                  "lokasi_lain": []
+                }
+              }
+            },
+            {
+              "id": "P8.1.6",
+              "nama": "Pengadaan PJU Solar Cell & Home Solar System (street solar cell) sebanyak 300 Set",
+              "penilai": [
+                "TA"
+              ],
+              "dinilai_sebagai_grup": false,
+              "catatan": null,
+              "lokasi_per_perusahaan": {
+                "TA": {
+                  "desa": [
+                    "Ritan Baru",
+                    "Gunung Sari",
+                    "Tukung Ritan",
+                    "Umaq Dian",
+                    "Long Beleh Modang"
+                  ],
+                  "lokasi_lain": []
+                }
+              }
+            },
+            {
+              "id": "P8.1.7",
+              "nama": "Pemasangan Sambungan Listrik Rumah",
+              "penilai": [
+                "TJ"
+              ],
+              "dinilai_sebagai_grup": false,
+              "catatan": null,
+              "lokasi_per_perusahaan": {
+                "TJ": {
+                  "desa": [
+                    "Long Beleh Modang"
+                  ],
+                  "lokasi_lain": []
+                }
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

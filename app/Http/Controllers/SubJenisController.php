@@ -25,9 +25,8 @@ class SubJenisController extends Controller
 
    public function index(Request $request)
     {
-        $_GET['Tahun'] = $_GET['Tahun'] ?? date('Y');
-        $_GET['tw'] = $_GET['tw'] ?? '';
-        $_GET['bagian'] = $_GET['bagian'] ?? BagianOptions::allCodesCsv();
+        $_GET['Tahun'] = \App\Support\SurveyFilter::year();
+        $_GET['bagian'] = \App\Support\SurveyFilter::pilarCsv();
 
         $bagianList = $this->getBagianList();
 

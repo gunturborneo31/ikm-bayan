@@ -1,5 +1,5 @@
-const CACHE_NAME = 'eskm-pwa-v2';
-const APP_SHELL = ['/', '/skm', '/admin/login', '/manifest.webmanifest', '/assets/logo_mahulu.png'];
+const CACHE_NAME = 'eskm-pwa-v3';
+const APP_SHELL = ['/', '/skm', '/manifest.webmanifest', '/assets/logo_mahulu.png', '/assets/logo-bayan.png'];
 
 self.addEventListener('install', (event) => {
     event.waitUntil(
@@ -32,6 +32,8 @@ self.addEventListener('fetch', (event) => {
         event.request.method !== 'GET'
         || !['http:', 'https:'].includes(url.protocol)
         || url.origin !== self.location.origin
+        // Sync API for the admin respondent page: always live, never from cache.
+        || url.pathname.startsWith('/admin/responden')
     ) {
         return;
     }

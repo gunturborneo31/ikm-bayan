@@ -15,5 +15,11 @@ class DatabaseSeeder extends Seeder
         $this->call([
             AdminUsersSeeder::class,
         ]);
+
+        // Master PPM dari JSON hanya diisi saat masih kosong, agar perubahan
+        // lewat menu "Master Data PPM" tidak tertimpa.
+        if (! \Illuminate\Support\Facades\DB::table('ppm_rincian')->exists()) {
+            $this->call(PpmMasterSeeder::class);
+        }
     }
 }

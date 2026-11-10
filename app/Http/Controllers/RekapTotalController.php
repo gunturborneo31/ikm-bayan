@@ -16,46 +16,11 @@ class RekapTotalController extends Controller
     {
                error_reporting(0);
 
-        $_GET['Tahun'] = $_GET['Tahun'] ?? date('Y');
-        $_GET['tw'] = $_GET['tw'] ?? '';
-        $_GET['bagian'] = $_GET['bagian'] ?? BagianOptions::allCodesCsv();
+        // Filter tahunan (Tahun + Pilar); view masih membaca $_GET, jadi isi dengan nilai yang sudah divalidasi.
+        $_GET['Tahun'] = \App\Support\SurveyFilter::year();
+        $_GET['bagian'] = \App\Support\SurveyFilter::pilarCsv();
 
-$startDate = '2024-01-01';
-
-$endDate = '2024-10-03';
-
-$terms = array_values(array_unique(array_filter(array_map('trim', explode(',', $_GET['bagian'])))));
-
-if ($_GET['tw'] == null) {
-    $today = date('Y-m-d', strtotime('+1 days'));
-    $endDate = $today;
-} elseif ($_GET['tw'] == 1) {
-    $startDate = $_GET['Tahun'] . '-01-01';
-    $endDate = $_GET['Tahun'] . '-03-31';
-} elseif ($_GET['tw'] == 2) {
-    $startDate = $_GET['Tahun'] . '-04-01';
-    $endDate = $_GET['Tahun'] . '-06-31';
-} elseif ($_GET['tw'] == 3) {
-    $startDate = $_GET['Tahun'] . '-01-01';
-    $endDate = $_GET['Tahun'] . '-06-31';
-} elseif ($_GET['tw'] == 4) {
-    $startDate = $_GET['Tahun'] . '-07-01';
-    $endDate = $_GET['Tahun'] . '-09-31';
-} elseif ($_GET['tw'] == 5) {
-    $startDate = $_GET['Tahun'] . '-01-01';
-    $endDate = $_GET['Tahun'] . '-09-31';
-} elseif ($_GET['tw'] == 6) {
-    $startDate = $_GET['Tahun'] . '-10-01';
-    $endDate = $_GET['Tahun'] . '-12-31';
-} elseif ($_GET['tw'] == 7) {
-    $startDate = $_GET['Tahun'] . '-01-01';
-    $endDate = $_GET['Tahun'] . '-12-31';
-}   
-
-        $query = DB::table('survey_responses')
-            ->whereBetween('survey_responses.created_at', [$startDate, $endDate])
-            ->whereIn('survey_responses.jenisPelayanan', $terms)
-            ->where('survey_responses.tahun', $_GET['Tahun'] ?? date('Y'));
+        $query = \App\Support\SurveyFilter::query();
 
         if (Schema::hasTable('sub_jenis')) {
             $query->leftJoin('sub_jenis', 'survey_responses.id_sub_jenis', '=', 'sub_jenis.id')
@@ -64,9 +29,58 @@ if ($_GET['tw'] == null) {
             $query->select('survey_responses.*', DB::raw('NULL as sub_jenis_jenis'));
         }
 
-        $selects = $query->paginate(10);
+        $selects = $query->orderByDesc('survey_responses.created_at')->paginate(10)->withQueryString();
 
-        return view('RekapTotal.index', compact('selects'));
+        // Total nilai per unsur untuk semua data sesuai filter (bukan hanya halaman ini)
+        $totals = \App\Support\SurveyFilter::query()
+            ->selectRaw('COUNT(*) as n, ' . implode(', ', array_map(fn ($i) => "COALESCE(SUM(u{$i}),0) as u{$i}", range(1, 9))))
+            ->first();
+
+        // Nama untuk kolom desa, pilar dan rincian program
+        $desaNames = Schema::hasTable('ppm_desa') ? DB::table('ppm_desa')->pluck('nama', 'id')->all() : [];
+        $pilarNames = \App\Support\BagianOptions::codeNameMap();
+        $rincianNames = Schema::hasTable('ppm_rincian') ? DB::table('ppm_rincian')->pluck('nama', 'id')->all() : [];
+
+        return view('RekapTotal.index', compact('selects', 'totals', 'desaNames', 'pilarNames', 'rincianNames'));
+    }
+
+    /**
+     * Detail satu penilaian: identitas responden, program yang dinilai,
+     * atribusi perusahaan, jawaban 9 unsur, saran, dan penilaian lain
+     * oleh responden yang sama.
+     */
+    public function show(string $id)
+    {
+        $data = DB::table('survey_responses')->where('id', $id)->first();
+        abort_if(! $data, 404, 'Data penilaian tidak ditemukan.');
+
+        $nama = fn (string $table, ?string $key, string $col = 'id') => $key === null || $key === ''
+            ? null
+            : DB::table($table)->where($col, $key)->value('nama');
+
+        $detail = [
+            'desa' => $data->desa_id ? DB::table('ppm_desa')->where('id', $data->desa_id)->value('nama') : null,
+            'pilar' => $nama('ppm_pilar', $data->pilar_id)
+                ?? \App\Support\BagianOptions::codeNameMap()[$data->jenisPelayanan] ?? $data->jenisPelayanan,
+            'program' => $nama('ppm_program', $data->program_id),
+            'rincian' => $nama('ppm_rincian', $data->rincian_id),
+            'grup' => $data->rincian_id ? (bool) DB::table('ppm_rincian')->where('id', $data->rincian_id)->value('dinilai_sebagai_grup') : false,
+            'opsi' => array_values(array_filter(explode(',', (string) $data->perusahaan_opsi))),
+        ];
+
+        // Penilaian lain oleh responden yang sama (identitas diisi sekali)
+        $lainnya = $data->responden_uuid
+            ? DB::table('survey_responses')
+                ->leftJoin('ppm_rincian', 'ppm_rincian.id', '=', 'survey_responses.rincian_id')
+                ->where('responden_uuid', $data->responden_uuid)
+                ->where('survey_responses.id', '!=', $data->id)
+                ->orderBy('survey_responses.created_at')
+                ->get(['survey_responses.id', 'survey_responses.created_at', 'survey_responses.perusahaan_dinilai',
+                    'ppm_rincian.nama as rincian_nama',
+                    DB::raw('(COALESCE(u1,0)+COALESCE(u2,0)+COALESCE(u3,0)+COALESCE(u4,0)+COALESCE(u5,0)+COALESCE(u6,0)+COALESCE(u7,0)+COALESCE(u8,0)+COALESCE(u9,0)) as skor')])
+            : collect();
+
+        return view('RekapTotal.show', compact('data', 'detail', 'lainnya'));
     }
 
 
@@ -160,13 +174,8 @@ if ($_GET['tw'] == null) {
         $NilaiUnsur = NilaiUnsur::findOrFail($id);
         $NilaiUnsur->delete();
 
-        if ($NilaiUnsur) {
-            //redirect dengan pesan sukses
-            return redirect('/rekapTotal?jenkel=1&usia=1&pekerjaan=1&pendidikan=1');
-        } else {
-            //redirect dengan pesan erro
-            return redirect('/rekapTotal?jenkel=1&usia=1&pekerjaan=1&pendidikan=1');
-        }
+        // Kembali ke daftar Resume pada tahun data yang dihapus
+        return redirect('/rekapTotal?jenkel=1&usia=1&pekerjaan=1&pendidikan=1&Tahun=' . ($NilaiUnsur->tahun ?? date('Y')));
     }
 
     /**

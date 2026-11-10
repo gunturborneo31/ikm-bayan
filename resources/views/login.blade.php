@@ -124,6 +124,12 @@
                 overlay.classList.remove('hidden');
                 overlay.classList.add('flex');
             });
+
+            // Sembunyikan overlay saat halaman dipulihkan dari bfcache (tombol Back)
+            window.addEventListener('pageshow', function() {
+                overlay.classList.add('hidden');
+                overlay.classList.remove('flex');
+            });
         })();
     </script>
 </body>

@@ -30,8 +30,23 @@ class BagianOptions
         );
     }
 
+    /**
+     * Pilar PPM [kode => nama]. Sumber utama: master PPM (ppm_pilar), karena kode
+     * inilah yang disimpan survei di survey_responses.jenisPelayanan.
+     */
     public static function codeNameMap(): array
     {
+        static $ppm = null;
+        if ($ppm === null) {
+            $ppm = Schema::hasTable('ppm_pilar')
+                ? \Illuminate\Support\Facades\DB::table('ppm_pilar')->orderBy('urutan')->pluck('nama', 'kode')
+                    ->map(fn ($nama) => str_replace(' Ppm', ' PPM', Str::title(Str::lower($nama))))->all()
+                : [];
+        }
+        if (! empty($ppm)) {
+            return $ppm;
+        }
+
         if (Schema::hasTable('bagian_layanan')) {
             $rows = BagianLayanan::query()
                 ->where('is_active', true)

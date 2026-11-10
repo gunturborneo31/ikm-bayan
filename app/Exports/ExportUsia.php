@@ -46,41 +46,7 @@ class ExportUsia implements FromCollection, WithHeadings, WithCustomStartCell,  
     {
         error_reporting(0);
 
-        $startDate = '2024-01-01';
-        $endDate = '2024-10-03';
-
-        if($_GET['Bulan']==null){
-            $today = date('Y-m-d',strtotime("+1 days"));
-            $endDate=$today;
-        }else if($_GET['Bulan']==1){
-            $endDate = '2024-01-31';
-        }else if($_GET['Bulan']==2){
-            $endDate = '2024-02-30';
-        }else if($_GET['Bulan']==3){
-            $endDate = '2024-03-31';
-        }else if($_GET['Bulan']==4){
-            $endDate = '2024-04-30';
-        }else if($_GET['Bulan']==5){
-            $endDate = '2024-05-31';
-        }else if($_GET['Bulan']==6){
-            $endDate = '2024-06-30';
-        }else if($_GET['Bulan']==7){
-            $endDate = '2024-07-31';
-        }else if($_GET['Bulan']==8){
-            $endDate = '2024-08-30';
-        }else if($_GET['Bulan']==9){
-            $endDate = '2024-09-31';
-        }else if($_GET['Bulan']==10){
-            $endDate = '2024-10-30';
-        }else if($_GET['Bulan']==11){
-            $endDate = '2024-11-31';
-        }else if($_GET['Bulan']==12){
-            $endDate = '2024-12-30';
-        }
-
-        $baseQuery = DB::table('survey_responses')
-            ->whereBetween('created_at', [$startDate, $endDate])
-            ->where('tahun', $_GET['Tahun'] ?? date('Y'));
+        $baseQuery = \App\Support\SurveyFilter::query();
 
         if($_GET['filter']==null or $_GET['filter']==1){
             $selects = $baseQuery->get(['nik','nama','usia','created_at']);

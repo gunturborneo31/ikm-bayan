@@ -3,54 +3,8 @@
 @php
     error_reporting(0);
 
-    $tahun = (string) request('Tahun', date('Y'));
-    $tw = (string) request('tw', '');
-
-    $allOptions = \App\Support\BagianOptions::codeNameMap();
-
-    $role = session('keterangan', request('keterangan', 'admin'));
-    $visibleKeys = \App\Support\BagianOptions::codesForRole($role);
-
-    $bagianParam = (string) request('bagian', '');
-    $requestedTerms = array_values(array_unique(array_filter(array_map('trim', explode(',', $bagianParam)))));
-    $requestedTerms = array_values(array_intersect($requestedTerms, $visibleKeys));
-    $terms = empty($requestedTerms) ? $visibleKeys : $requestedTerms;
-    $bagianQuery = implode(',', $terms);
-
-    $yearOptions = ['2023', '2024', '2025', '2026'];
-    $quarterOptions = [
-        '1' => 'TW 1 - Jan-Mar',
-        '2' => 'TW 2 - Apr-Jun',
-        '3' => 'TW 2 - Jan-Jun',
-        '4' => 'TW 3 - Jul-Sep',
-        '5' => 'TW 3 - Jan-Sep',
-        '6' => 'TW 4 - Okt-Des',
-        '7' => 'TW 4 - Jan-Des',
-    ];
-
-    $currentYearLabel = in_array($tahun, $yearOptions, true) ? $tahun : 'Pilih Tahun';
-    $currentQuarterLabel = $quarterOptions[$tw] ?? 'Pilih TW';
-
-    $startDate = $tahun . '-01-01';
-    $endDate = date('Y-m-d', strtotime('+1 days'));
-
-    $quarterRanges = [
-        '1' => [$tahun . '-01-01', $tahun . '-03-31'],
-        '2' => [$tahun . '-04-01', $tahun . '-06-30'],
-        '3' => [$tahun . '-01-01', $tahun . '-06-30'],
-        '4' => [$tahun . '-07-01', $tahun . '-09-30'],
-        '5' => [$tahun . '-01-01', $tahun . '-09-30'],
-        '6' => [$tahun . '-10-01', $tahun . '-12-31'],
-        '7' => [$tahun . '-01-01', $tahun . '-12-31'],
-    ];
-
-    if ($tw !== '' && array_key_exists($tw, $quarterRanges)) {
-        [$startDate, $endDate] = $quarterRanges[$tw];
-    }
-
-    $baseQuery = DB::table('survey_responses')
-        ->whereIn('jenisPelayanan', $terms)
-        ->whereBetween('created_at', [$startDate, $endDate]);
+    // Filter tahunan (Tahun + Pilar). Satu responden dihitung sekali walau menilai beberapa program.
+    $baseQuery = \App\Support\SurveyFilter::respondenQuery();
 
     $jenkelAgg = (clone $baseQuery)
         ->selectRaw("COALESCE(SUM(CASE WHEN jenkel = 'Laki - Laki' THEN 1 ELSE 0 END), 0) as laki_laki")
@@ -112,16 +66,16 @@
         ['label' => 'Lainnya', 'total' => (int) ($pekerjaanAgg->lainnya ?? 0)],
     ];
 
+    $jenisRespondenData = \App\Support\SurveyFilter::jenisRespondenData($baseQuery);
+
     $sections = [
+        ['key' => 'jenisResponden', 'title' => 'Jenis Responden', 'data' => $jenisRespondenData, 'colors' => ['#7C2D12', '#C2410C', '#F97316', '#FDBA74']],
         ['key' => 'jenkel', 'title' => 'Jenis Kelamin', 'data' => $jenkelData, 'colors' => ['#EA580C', '#FB923C']],
         ['key' => 'umur', 'title' => 'Rentang Umur', 'data' => $umurData, 'colors' => ['#C2410C', '#EA580C', '#F97316', '#FDBA74']],
         ['key' => 'pendidikan', 'title' => 'Tingkat Pendidikan', 'data' => $pendidikanData, 'colors' => ['#9A3412', '#C2410C', '#EA580C', '#F97316', '#FB923C', '#FDBA74']],
         ['key' => 'pekerjaan', 'title' => 'Jenis Pekerjaan', 'data' => $pekerjaanData, 'colors' => ['#7C2D12', '#9A3412', '#C2410C', '#EA580C', '#F97316', '#FDBA74']],
     ];
 
-    $bagianOptions = collect($allOptions)
-        ->only($visibleKeys)
-        ->all();
 @endphp
 
 @section('content')
@@ -151,12 +105,7 @@
                 'routeBase' => '/dashboardAdmin/create',
                 'brandTitle' => 'E-SKM PPM Bayan Group',
                 'subtitle' => 'Dashboard Responden',
-                'selectedYear' => $tahun,
-                'selectedTw' => $tw,
-                'bagianQuery' => $bagianQuery,
                 'showBagian' => true,
-                'selectedBagian' => $terms,
-                'bagianOptions' => $bagianOptions,
                 'showHomeButton' => false,
                 'showAdminButton' => false,
                 'enableLoadingNav' => true,
@@ -180,23 +129,6 @@
     ])
 
     <script>
-        const applyBagianButton = document.getElementById('applyBagian');
-        if (applyBagianButton) {
-            applyBagianButton.addEventListener('click', () => {
-                const checked = Array.from(document.querySelectorAll('.bagian-checkbox:checked')).map((cb) => cb.value);
-                if (checked.length === 0) {
-                    alert('Silakan pilih minimal satu bagian.');
-                    return;
-                }
-
-                window.showPageLoading();
-                const tw = '{{ $tw }}';
-                const tahun = '{{ $tahun }}';
-                const bagian = checked.join(',');
-                window.location.href = `/dashboardAdmin/create?tw=${tw}&Tahun=${tahun}&bagian=${bagian}`;
-            });
-        }
-
         const makePieChart = (elementId, labels, series, colors) => {
             const el = document.getElementById(elementId);
             if (!el || typeof ApexCharts === 'undefined') {

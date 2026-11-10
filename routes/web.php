@@ -14,6 +14,9 @@ use App\Http\Controllers\RekapTotalController;
 use App\Http\Controllers\PengaturanController;
 use App\Http\Controllers\ExportController;
 use App\Http\Controllers\SubJenisController;
+use App\Http\Controllers\PpmSurveyController;
+use App\Http\Controllers\RekapPpmController;
+use App\Http\Controllers\MasterPpmController;
 use Illuminate\Support\Facades\Route;
 use App\Support\BagianOptions;
 
@@ -36,11 +39,9 @@ Route::view('/remake', 'home');
 Route::get('/login', function () {
     if (session()->has('user_id')) {
         $role = session('keterangan', 'admin');
-        $bagian = BagianOptions::csvForRole($role);
-        $tw = (int) ceil((int) date('m') / 3);
         $tahun = date('Y');
 
-        return redirect("/rekapTotal?jenkel=1&usia=1&pekerjaan=1&pendidikan=1&tw={$tw}&Tahun={$tahun}&bagian={$bagian}&keterangan=" . urlencode($role));
+        return redirect("/rekapTotal?jenkel=1&usia=1&pekerjaan=1&pendidikan=1&Tahun={$tahun}&keterangan=" . urlencode($role));
     }
 
     return view('login');
@@ -49,25 +50,28 @@ Route::get('/login', function () {
 Route::post('/login', [DashboardController::class, 'store'])->name('login.store');
 Route::post('/logout', [DashboardController::class, 'logout'])->name('logout');
 
-Route::get('/skm', function () {
-    $bagianList = collect(BagianOptions::idNameMap())
-        ->map(fn ($name) => strtoupper($name))
-        ->toArray();
-
-    return view('skm', compact('bagianList'));
-});
+// Survei publik PPM: desa -> program -> rincian -> perusahaan -> identitas -> kuesioner
+Route::get('/skm', [PpmSurveyController::class, 'show']);
+Route::post('/skm', [PpmSurveyController::class, 'store'])->name('skm.store');
+Route::get('/skm/selesai', [PpmSurveyController::class, 'selesai'])->name('skm.selesai');
+Route::get('/skm/baru', [PpmSurveyController::class, 'baru'])->name('skm.baru');
 
 Route::get('/terimakasih', function () {
-    return view('terimakasih');
+    return view('terimakasih', [
+        'responden' => session(PpmSurveyController::SESSION_KEY),
+    ]);
 });
 
 // Route::get('word', function () {
 //     return view('word');
 // });
 
-Route::get('export', [WordController::class,'export'])->name('export');
-Route::get('/exports', function () {
-    return view('exports');
+// Laporan SKM PPM (.docx), mengikuti filter Tahun + Pilar + Perusahaan. Hanya untuk admin.
+Route::middleware('admin.session')->group(function () {
+    Route::get('export', [\App\Http\Controllers\LaporanSkmController::class, 'download'])->name('export');
+    Route::get('/exports', function () {
+        return view('exports');
+    });
 });
 
 Route::resource('dashboard', DashboardController::class)->only(['index']);
@@ -86,15 +90,56 @@ Route::middleware('admin.session')->group(function () {
 
     Route::get('exports/download', [ExportController::class, 'export'])->name('exports.download');
 
-    Route::get('/sub-jenis', [SubJenisController::class, 'index'])->name('subjenis.index');
+    Route::get('/rekap-ppm', [RekapPpmController::class, 'index'])->name('rekap-ppm');
+
+    // Halaman lama "Sub Pelayanan" (tabel bagian_layanan/sub_jenis) sudah tidak dipakai survei.
+    // Master data yang dipakai survei & laporan diatur di /master-ppm.
+    Route::redirect('/sub-jenis', '/master-ppm')->name('subjenis.index');
+
+    // Master Data PPM: desa, perusahaan, pilar -> program -> rincian, lokasi pelaksana
+    Route::prefix('master-ppm')->name('master-ppm.')->controller(MasterPpmController::class)->group(function () {
+        Route::get('/', 'index')->name('index');
+        Route::get('/export', 'export')->name('export');
+        Route::post('/import', 'import')->name('import');
+
+        Route::post('/desa', 'storeDesa')->name('desa.store');
+        Route::put('/desa/{id}', 'updateDesa')->whereNumber('id')->name('desa.update');
+        Route::delete('/desa/{id}', 'destroyDesa')->whereNumber('id')->name('desa.destroy');
+
+        Route::post('/perusahaan', 'storePerusahaan')->name('perusahaan.store');
+        Route::put('/perusahaan/{kode}', 'updatePerusahaan')->name('perusahaan.update');
+        Route::delete('/perusahaan/{kode}', 'destroyPerusahaan')->name('perusahaan.destroy');
+
+        Route::post('/pilar', 'storePilar')->name('pilar.store');
+        Route::put('/pilar/{id}', 'updatePilar')->name('pilar.update');
+        Route::delete('/pilar/{id}', 'destroyPilar')->name('pilar.destroy');
+
+        Route::post('/program', 'storeProgram')->name('program.store');
+        Route::put('/program/{id}', 'updateProgram')->name('program.update');
+        Route::delete('/program/{id}', 'destroyProgram')->name('program.destroy');
+
+        Route::post('/rincian', 'storeRincian')->name('rincian.store');
+        Route::get('/rincian/{id}', 'editRincian')->name('rincian');
+        Route::put('/rincian/{id}', 'updateRincian')->name('rincian.update');
+        Route::delete('/rincian/{id}', 'destroyRincian')->name('rincian.destroy');
+    });
 });
 
 // Offline SKM Admin
 Route::middleware('admin.session')->group(function () {
-    Route::get('/admin/offline-skm', function () {
-        return view('admin.offline-skm');
-    })->name('admin.offline-skm');
+    // Import Excel: download format -> upload -> analisis duplikat -> import baris terpilih
+    Route::get('/admin/offline-skm', [\App\Http\Controllers\OfflineSkmController::class, 'page'])->name('admin.offline-skm');
+    Route::get('/admin/offline-skm/format', [\App\Http\Controllers\OfflineSkmController::class, 'template'])->name('admin.offline-skm.template');
+    Route::post('/admin/offline-skm/analisis', [\App\Http\Controllers\OfflineSkmController::class, 'analyze'])->name('admin.offline-skm.analyze');
     Route::post('/admin/import-offline-skm', [\App\Http\Controllers\OfflineSkmController::class, 'import'])->name('admin.import-offline-skm');
+
+    // Input responden oleh admin (bisa offline, data disinkronkan lewat endpoint JSON ini)
+    Route::get('/admin/input-responden', [\App\Http\Controllers\AdminRespondenController::class, 'page'])->name('admin.input-responden');
+    Route::get('/admin/responden/token', [\App\Http\Controllers\AdminRespondenController::class, 'token']);
+    Route::get('/admin/responden', [\App\Http\Controllers\AdminRespondenController::class, 'index']);
+    Route::post('/admin/responden', [\App\Http\Controllers\AdminRespondenController::class, 'store']);
+    Route::put('/admin/responden/{id}', [\App\Http\Controllers\AdminRespondenController::class, 'update'])->whereNumber('id');
+    Route::delete('/admin/responden/{id}', [\App\Http\Controllers\AdminRespondenController::class, 'destroy'])->whereNumber('id');
 });
 
 // API endpoints (AJAX)

@@ -77,14 +77,27 @@
                 <div id="progressBar" class="h-full bg-[#ff8800] rounded-full transition-none" style="width:100%"></div>
             </div>
             <p class="text-xs text-slate-400 -mt-4">
-                Kembali ke halaman utama dalam <span id="countdown" class="font-bold text-[#ff8800]">5</span> detik
+                {{ !empty($responden) ? 'Survei selesai otomatis dalam' : 'Kembali ke halaman utama dalam' }}
+                <span id="countdown" class="font-bold text-[#ff8800]">{{ !empty($responden) ? 30 : 5 }}</span> detik
             </p>
 
-            {{-- Button --}}
-            <button id="ok-btn"
-                class="w-full bg-[#ff8800] hover:bg-[#e07200] active:scale-95 text-white font-extrabold text-sm py-3 rounded-2xl shadow-md shadow-orange-200 transition-all duration-200">
-                Kembali Sekarang
-            </button>
+            @if (!empty($responden))
+                {{-- Responden yang sama bisa menilai program lain tanpa mengisi ulang identitas --}}
+                <a href="{{ url('/skm') }}" id="lanjut-btn"
+                    class="w-full bg-[#ff8800] hover:bg-[#e07200] active:scale-95 text-white font-extrabold text-sm py-3 rounded-2xl shadow-md shadow-orange-200 transition-all duration-200">
+                    Nilai Program Lain
+                </a>
+                <button id="ok-btn"
+                    class="w-full -mt-2 bg-white border-2 border-[#ff8800] text-[#ff8800] hover:bg-orange-50 active:scale-95 font-extrabold text-sm py-3 rounded-2xl transition-all duration-200">
+                    Selesai
+                </button>
+                <p class="text-xs text-slate-400 -mt-2">Sudah menilai {{ count($responden['dinilai'] ?? []) }} program sebagai {{ $responden['nama'] }}.</p>
+            @else
+                <button id="ok-btn"
+                    class="w-full bg-[#ff8800] hover:bg-[#e07200] active:scale-95 text-white font-extrabold text-sm py-3 rounded-2xl shadow-md shadow-orange-200 transition-all duration-200">
+                    Kembali Sekarang
+                </button>
+            @endif
 
             {{-- Footer note --}}
             <p class="text-[10px] text-slate-300 -mt-2">E-SKM PPM Bayan Group</p>
@@ -93,8 +106,11 @@
 
     <script>
         (function () {
-            var targetUrl = "{{ url('/') }}";
-            var total = 5;
+            var targetUrl = "{{ !empty($responden) ? route('skm.selesai') : url('/') }}";
+            var total = {{ !empty($responden) ? 30 : 5 }};
+            document.getElementById('lanjut-btn')?.addEventListener('click', function () {
+                clearInterval(timer);
+            });
             var remaining = total;
             var countdown = document.getElementById('countdown');
             var progressBar = document.getElementById('progressBar');

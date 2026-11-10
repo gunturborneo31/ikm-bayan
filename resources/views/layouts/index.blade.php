@@ -264,6 +264,15 @@
             overlay.classList.add('flex');
         };
 
+        // Sembunyikan overlay saat halaman dipulihkan dari bfcache (tombol Back)
+        window.addEventListener('pageshow', function() {
+            const overlay = document.getElementById('loadingOverlay');
+            if (overlay) {
+                overlay.classList.add('hidden');
+                overlay.classList.remove('flex');
+            }
+        });
+
         document.addEventListener('click', function(event) {
             const trigger = event.target.closest('.js-admin-nav');
             if (trigger) {

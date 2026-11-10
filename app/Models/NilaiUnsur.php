@@ -55,6 +55,7 @@ class NilaiUnsur extends Model
     }
 
     protected $fillable = [
+            'client_uuid',
             'jenisPelayanan',
             'tahun',
             'nama' ,
@@ -76,5 +77,15 @@ class NilaiUnsur extends Model
             'u9' ,
             'saran' ,
             'id_sub_jenis' ,
+            'responden_uuid',
+            'jenis_responden',
+            'desa_id',
+            'pilar_id',
+            'program_id',
+            'rincian_id',
+            'perusahaan_jawaban',
+            'perusahaan_dinilai',
+            'sumber_atribusi',
+            'perusahaan_opsi',
     ];
 }

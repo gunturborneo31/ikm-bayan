@@ -831,33 +831,30 @@
 
 <?php
 $error = 'max-w-md  font-bold tracking-tight mb-2 text-red-600 lg:text-sm text-xl drop-shadow-[0_5px_5px_rgba(0,0,0,0.2)]';
-
-$legacyBagianList = [
-    1 => 'BAGIAN ORGANISASI',
-    2 => 'BAGIAN UMUM',
-    3 => 'BAGIAN PEMERINTAHAN',
-    4 => 'BAGIAN ADMINISTRASI PEMBANGUNAN',
-    5 => 'BAGIAN PROTOKOL DAN KOMUNIKASI PIMPINAN',
-    6 => 'BAGIAN KESEJAHTERAAN RAKYAT',
-    7 => 'BAGIAN PENGADAAN BARANG DAN JASA',
-    8 => 'BAGIAN PEREKONOMIAN DAN SUMBER DAYA ALAM',
-    9 => 'BAGIAN HUKUM',
-];
-
-$bagianList = isset($bagianList) && is_array($bagianList) ? $bagianList : [];
-
-if (empty($bagianList)) {
-    $bagianList = \App\Support\BagianOptions::idNameMap();
-}
-
-$bagianList = collect($bagianList)
-    ->filter(fn ($label) => filled(trim((string) $label)))
-    ->map(fn ($label) => strtoupper(trim((string) $label)))
-    ->toArray();
-if (empty($bagianList)) {
-    $bagianList = $legacyBagianList;
-}
+$desaList = $catalog['desa'] ?? [];
+$isLanjutan = !empty($responden);
+$radioCard = 'inline-flex items-center justify-between w-full p-3 text-gray-900 bg-white border-2 border-white rounded-lg cursor-pointer peer-checked:bg-gray-800 h-full peer-checked:text-white hover:text-gray-900 hover:bg-gray-400';
+$arrowNext = 'M12 2.25c-5.385 0-9.75 4.365-9.75 9.75s4.365 9.75 9.75 9.75 9.75-4.365 9.75-9.75S17.385 2.25 12 2.25zm4.28 10.28a.75.75 0 000-1.06l-3-3a.75.75 0 10-1.06 1.06l1.72 1.72H8.25a.75.75 0 000 1.5h5.69l-1.72 1.72a.75.75 0 101.06 1.06l3-3z';
+$arrowPrev = 'M12 2.25c-5.385 0-9.75 4.365-9.75 9.75s4.365 9.75 9.75 9.75 9.75-4.365 9.75-9.75S17.385 2.25 12 2.25zm-4.28 9.22a.75.75 0 000 1.06l3 3a.75.75 0 101.06-1.06l-1.72-1.72h5.69a.75.75 0 000-1.5h-5.69l1.72-1.72a.75.75 0 00-1.06-1.06l-3 3z';
 ?>
+
+<style>
+    /* Daftar pilihan yang bisa panjang (program, rincian) tetap bisa digulir di dalam kartu */
+    .ppm-scroll { max-height: calc(100dvh - 19rem); overflow-y: auto; padding-right: 4px; scrollbar-width: thin; scrollbar-color: #ffb781 transparent; }
+    .ppm-pilar-title { font-size: 11px; font-weight: 800; letter-spacing: .18em; text-transform: uppercase; color: #924c00; margin: 14px 0 6px; }
+    .ppm-pilar-title:first-child { margin-top: 0; }
+    .ppm-done { opacity: .55; cursor: not-allowed !important; }
+    .ppm-tag { display: inline-block; font-size: 11px; font-weight: 800; padding: 2px 8px; border-radius: 999px; background: #ffedd5; color: #9a3412; margin-left: 8px; white-space: nowrap; }
+    .ppm-banner { border-radius: 14px; background: #fff7ed; border: 1px solid #fed7aa; color: #7c2d12; padding: 10px 14px; font-size: 14px; font-weight: 600; margin-bottom: 12px; }
+    .ppm-banner a { color: #ea580c; font-weight: 800; text-decoration: underline; white-space: nowrap; }
+    .ppm-errors { border-radius: 14px; background: #fee2e2; border: 1px solid #fca5a5; color: #991b1b; padding: 10px 14px; font-size: 14px; font-weight: 600; margin-bottom: 12px; }
+    .ppm-hint { font-size: 14px; color: #57534e; margin: 0 0 10px; }
+    #program > div:first-child, #rincian > div:first-child, #perusahaan > div:first-child { max-width: 1100px; }
+    @media (max-width: 768px) {
+        .survey-track a.step-nav { width: auto !important; flex: 1 1 0 !important; min-width: 0 !important; justify-content: center !important; font-size: 0.82rem !important; }
+        .ppm-scroll { max-height: calc(100dvh - 17rem); }
+    }
+</style>
 
 <body class="items-center">
     <div class="survey-shell">
@@ -879,7 +876,7 @@ if (empty($bagianList)) {
                     <div class="survey-progress-dots" id="surveyProgressDots"></div>
                     <div class="survey-progress-copy">
                         <p class="text-[11px] font-extrabold uppercase tracking-[0.22em] text-white/75">Progress</p>
-                        <p class="text-sm font-bold text-white"><span id="surveyStepLabel">Pilih bagian layanan</span> • <span id="surveyStepCount">1 / 13</span></p>
+                        <p class="text-sm font-bold text-white"><span id="surveyStepLabel">Pilih desa</span> • <span id="surveyStepCount">1 / 16</span></p>
                     </div>
                 </div>
             </div>
@@ -887,59 +884,41 @@ if (empty($bagianList)) {
 
         <div class="overflow-x-hidden relative z-10">
 
-            <div id="popup" class="fixed z-50 bg-black bg-opacity-30 w-full flex items-center h-full">
+            <div id="popup" class="fixed z-50 bg-black bg-opacity-30 w-full flex items-center h-full {{ $isLanjutan ? 'hidden' : '' }}">
                 <div class="fixed z-30 bg-opacity-50 overflow-y-auto w-full" id="modal">
                     <div class="relative mx-auto p-5 border lg:w-1/2 w-5/6 shadow-lg rounded-md bg-white">
                         <div class="mt-3 text-center">
                             <h3 class="lg:text-lg lg:text-2xl  text-4xl  lg:leading-6 font-medium mb-4 text-gray-900 ">
-                                SELAMAT
-                                DATANG DI
-                                SURVEI KEPUASAN
-                                MASYARAKAT
+                                SELAMAT DATANG DI SURVEI KEPUASAN MASYARAKAT
                             </h3>
                             <label class="text-black font-black lg:text-sm text-4xl">PERHATIAN:</label>
                             <div class="px-7 items-start mt-4 text-left justify-start">
                                 <table class="border-separate font-bold border-spacing-y-3 lg:text-sm text-4xl">
                                     <tr>
                                         <td class="items-start flex">1. </td>
-                                        <td class="text-justify">Tujuan survei ini adalah untuk memperoleh gambaran secara
-                                            objektif mengenai kepuasan
-                                            masyarakat terhadap pelayanan publik</td>
+                                        <td class="text-justify">Tujuan survei ini adalah untuk memperoleh gambaran secara objektif mengenai kepuasan masyarakat terhadap Program Pengembangan dan Pemberdayaan Masyarakat (PPM) Bayan Group</td>
                                     </tr>
                                     <tr>
                                         <td class="items-start flex">2. </td>
-                                        <td class="text-justify">Pilihan jawaban yang Anda berikan diharapkan sebagai
-                                            pilihan
-                                            yang dapat dipertanggungjawabkan</td>
+                                        <td class="text-justify">Pilih desa Anda, lalu program yang ingin Anda nilai. Anda dapat menilai lebih dari satu program tanpa mengisi ulang identitas</td>
                                     </tr>
                                     <tr>
                                         <td class="items-start flex">3. </td>
-                                        <td class="text-justify">Hasil survei ini akan digunakan sebagai bahan penyusunan
-                                            Laporan
-                                            Survei Kepuasan
-                                            Masyarakat terhadap pelayanan publik yang sangat bermanfaat bagi pemerintah
-                                            maupun
-                                            masyarakat</td>
+                                        <td class="text-justify">Pilihan jawaban yang Anda berikan diharapkan sebagai pilihan yang dapat dipertanggungjawabkan</td>
                                     </tr>
                                     <tr>
                                         <td class="items-start flex">4. </td>
-                                        <td class="text-justify">Keterangan nilai survei bersifat terbuka dan tidak
-                                            dirahasiakan
-                                        </td>
+                                        <td class="text-justify">Hasil survei ini akan digunakan sebagai bahan perbaikan pelaksanaan program PPM</td>
                                     </tr>
                                 </table>
                             </div>
                             <div class="step-actions flex justify-between items-center px-4 py-3">
-                                <button type="button" onclick="window.location='#awal'; closePopup()"
-                                    class="px-4 py-2 bg-gray-800 text-white 
-                                lg:text-base font-medium rounded-md text-4xl
-                                shadow-sm hover:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-purple-300">
-                                    SEBELUM
+                                <button type="button" onclick="window.location='/'"
+                                    class="px-4 py-2 bg-gray-800 text-white lg:text-base font-medium rounded-md text-4xl shadow-sm hover:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-purple-300">
+                                    KEMBALI
                                 </button>
                                 <button type="button" onclick="closePopup()" id="ok-btn"
-                                    class="px-4 py-2 bg-gray-800 text-white 
-                                lg:text-base font-medium rounded-md text-4xl
-                                shadow-sm hover:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-purple-300">
+                                    class="px-4 py-2 bg-gray-800 text-white lg:text-base font-medium rounded-md text-4xl shadow-sm hover:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-purple-300">
                                     LANJUT
                                 </button>
                             </div>
@@ -948,99 +927,135 @@ if (empty($bagianList)) {
                 </div>
             </div>
 
-            <form action="{{ route('nilaiUnsur.store') }}" method="POST" enctype="multipart/form-data"
-                class="survey-track h-screen flex">
+            <form id="surveyForm" action="{{ route('skm.store') }}" method="POST" class="survey-track h-screen flex" novalidate>
                 @csrf
-                <div id="awal"
-                class=" items-center relative isolate  min-w-full h-screen px-6 shadow-2xl sm:px-16 lg:px-24 bg-gradient-to-br from-[#18bdde] from-60%  to-[#fffb61] to-95%">
+                <input type="hidden" name="lanjutan" value="{{ $isLanjutan ? 1 : 0 }}">
 
+                {{-- 1. DESA --}}
+                <div id="awal"
+                class=" items-center relative isolate  min-w-full h-screen px-6 shadow-2xl sm:px-16 lg:px-24">
                 <div class="text-left flex flex-col lg:py-14 lg:px-12 py-8 px-6 lg:text-left w-full justify-between">
+                    @if ($errors->any())
+                        <div class="ppm-errors">
+                            Data belum tersimpan:
+                            <ul class="list-disc pl-5">
+                                @foreach ($errors->all() as $message)
+                                    <li>{{ $message }}</li>
+                                @endforeach
+                            </ul>
+                        </div>
+                    @endif
+                    @if ($isLanjutan)
+                        <div class="ppm-banner">
+                            Anda melanjutkan sebagai <b>{{ $responden['nama'] }}</b> (Desa {{ $desaList[$responden['desa_id']] ?? '-' }}).
+                            <a href="{{ route('skm.baru') }}">Bukan Anda? Responden baru</a>
+                        </div>
+                    @endif
                     <label
                         class=" max-w-md  text-left font-bold tracking-tight mb-2 whitespace-nowrap mb-3 text-gray-900 lg:text-2xl  text-4xl  drop-shadow-[0_1px_1px_rgba(0,0,0,0.3)]">
-                        Silakan memilih bagian <br class="lg:hidden">yang akan Anda berikan penilaian
+                        Silakan pilih desa Anda
                     </label>
                     <div class="h-3"></div>
-                    <div class="lg:flex w-full justify-between gap-4">
-                        @if (empty($bagianList))
-                            <div class="w-full rounded-xl border border-orange-200 bg-orange-50 px-4 py-3 text-sm font-semibold text-orange-800">
-                                Pilihan bagian belum tersedia. Silakan refresh halaman atau hubungi admin.
-                            </div>
-                        @endif
-                        <ul id="bagianRadios" class="grid w-full gap-2 lg:grid-cols-5 grid-cols-1">
-                        @foreach ($bagianList as $id => $label)
+                    @if (empty($desaList))
+                        <div class="w-full rounded-xl border border-orange-200 bg-orange-50 px-4 py-3 text-sm font-semibold text-orange-800">
+                            Data desa belum tersedia. Silakan hubungi admin.
+                        </div>
+                    @endif
+                    <ul id="desaRadios" class="grid w-full gap-2 lg:grid-cols-4 grid-cols-2">
+                        @foreach ($desaList as $id => $nama)
+                            @php $locked = $isLanjutan && (int) $responden['desa_id'] !== (int) $id; @endphp
                             <li>
-                            <input type="radio"
-                                    id="bagian{{ $id }}"
-                                    name="bagian"
-                                    value="{{ $id }}"
-                                    class="hidden peer radio-bagian"
-                                    {{ $loop->first ? 'checked' : '' }}>
-                            <label for="bagian{{ $id }}"
-                                class="inline-flex items-center justify-between w-full p-3 text-gray-900 bg-white border-2 border-white rounded-lg cursor-pointer peer-checked:bg-gray-800 h-full peer-checked:text-white hover:text-gray-900 hover:bg-gray-400">
-                                <div class="block flex w-full items-center">
-                                <div class="w-full lg:text-lg lg:text-2xl text-left lg:text-center text-4xl font-semibold">
-                                    {{ strtoupper($label) }}
-                                </div>
-                                </div>
-                            </label>
+                                <input type="radio" id="desa{{ $id }}" name="desa_id" value="{{ $id }}"
+                                    class="hidden peer radio-desa"
+                                    {{ $isLanjutan && (int) $responden['desa_id'] === (int) $id ? 'checked' : '' }}
+                                    {{ $locked ? 'disabled' : '' }}>
+                                <label for="desa{{ $id }}" class="{{ $radioCard }} {{ $locked ? 'ppm-done' : '' }}">
+                                    <div class="w-full lg:text-lg text-left lg:text-center text-xl font-semibold">{{ $nama }}</div>
+                                </label>
                             </li>
                         @endforeach
-                        </ul>
-                    </div>
+                    </ul>
                     <div class="step-actions flex justify-end mt-5">
-                        <a type="button" onclick="window.location='#identitas'"
-                            class="flex items-center gap-2 cursor-pointer drop-shadow-[0_3px_3px_rgba(0,0,0,0.3)]">
+                        <a type="button" onclick="lanjutDariDesa()" class="step-nav flex items-center gap-2 cursor-pointer drop-shadow-[0_3px_3px_rgba(0,0,0,0.3)]">
                             <label class="text-gray-900 font-medium lg:text-xl text-4xl cursor-pointer ">LANJUT</label>
-                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"
-                                class="w-8 h-8 text-gray-900">
-                                <path fill-rule="evenodd"
-                                    d="M12 2.25c-5.385 0-9.75 4.365-9.75 9.75s4.365 9.75 9.75 9.75 9.75-4.365 9.75-9.75S17.385 2.25 12 2.25zm4.28 10.28a.75.75 0 000-1.06l-3-3a.75.75 0 10-1.06 1.06l1.72 1.72H8.25a.75.75 0 000 1.5h5.69l-1.72 1.72a.75.75 0 101.06 1.06l3-3z"
-                                    clip-rule="evenodd" />
-                            </svg>
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-8 h-8 text-gray-900"><path fill-rule="evenodd" d="{{ $arrowNext }}" clip-rule="evenodd" /></svg>
                         </a>
                     </div>
                 </div>
                 </div>
-                {{-- <div  id="jenisProgram"
-                class="hidden items-center relative isolate  min-w-full h-screen px-6 shadow-2xl sm:px-16 lg:px-24 bg-gradient-to-br from-[#18bdde] from-60%  to-[#fffb61] to-95%">
 
-                <div class="  text-left   lg:py-32 py-12 lg:text-left  w-full justify-between">
-                    <label
-                        class=" max-w-md  text-left font-bold tracking-tight mb-2 whitespace-nowrap mb-3 text-gray-900 lg:text-2xl  text-4xl  drop-shadow-[0_1px_1px_rgba(0,0,0,0.3)]">
-                        Silakan memilih jenis program
+                {{-- 2. PROGRAM (dikelompokkan per pilar) --}}
+                <div id="program" class=" items-center relative isolate  min-w-full h-screen px-6 shadow-2xl sm:px-16 lg:px-24">
+                <div class="text-left flex flex-col lg:py-14 lg:px-12 py-8 px-6 lg:text-left w-full justify-between">
+                    @if ($isLanjutan)
+                        <div class="ppm-banner">
+                            Menilai program lain sebagai <b>{{ $responden['nama'] }}</b>.
+                            <a href="{{ route('skm.baru') }}">Responden baru</a>
+                        </div>
+                    @endif
+                    <label class="max-w-md text-left font-bold tracking-tight mb-2 text-gray-900 lg:text-2xl text-4xl">
+                        Pilih program yang akan Anda nilai
                     </label>
-                    <div class="h-3"></div>
-                    <div class="lg:flex w-full justify-between gap-4">
-                        <ul id="jenisContainer" class="grid w-full gap-2 lg:grid-cols-2 grid-cols-1"></ul>
-                    </div>
+                    <p class="ppm-hint">Program yang berjalan di Desa <b class="js-desa-nama">-</b>.</p>
+                    <div id="programList" class="ppm-scroll"></div>
                     <div class="step-actions flex justify-between mt-5">
-                        <a type="button" onclick="window.location='#awal'" 
-                            class="flex items-center gap-2 cursor-pointer drop-shadow-[0_3px_3px_rgba(0,0,0,0.3)]">
-                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"
-                                class="w-8 h-8 text-gray-900">
-                                <path fill-rule="evenodd"
-                                    d="M12 2.25c-5.385 0-9.75 4.365-9.75 9.75s4.365 9.75 9.75 9.75 9.75-4.365 9.75-9.75S17.385 2.25 12 2.25zm-4.28 9.22a.75.75 0 000 1.06l3 3a.75.75 0 101.06-1.06l-1.72-1.72h5.69a.75.75 0 000-1.5h-5.69l1.72-1.72a.75.75 0 00-1.06-1.06l-3 3z"
-                                    clip-rule="evenodd" />
-                            </svg>
+                        <a type="button" onclick="kembaliDariProgram()" class="step-nav flex items-center gap-2 cursor-pointer drop-shadow-[0_3px_3px_rgba(0,0,0,0.3)]">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-8 h-8 text-gray-900"><path fill-rule="evenodd" d="{{ $arrowPrev }}" clip-rule="evenodd" /></svg>
                             <label class="text-gray-900 font-medium lg:text-xl text-4xl cursor-pointer">SEBELUM</label>
-
                         </a>
-                        <a type="button" onclick="lanjutKeBiodata()"
-                            class="flex items-center gap-2 cursor-pointer drop-shadow-[0_3px_3px_rgba(0,0,0,0.3)]">
-                            <label class="text-gray-900 font-medium lg:text-xl text-4xl cursor-pointer ">LANJUT</label>
-                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"
-                                class="w-8 h-8 text-gray-900">
-                                <path fill-rule="evenodd"
-                                    d="M12 2.25c-5.385 0-9.75 4.365-9.75 9.75s4.365 9.75 9.75 9.75 9.75-4.365 9.75-9.75S17.385 2.25 12 2.25zm4.28 10.28a.75.75 0 000-1.06l-3-3a.75.75 0 10-1.06 1.06l1.72 1.72H8.25a.75.75 0 000 1.5h5.69l-1.72 1.72a.75.75 0 101.06 1.06l3-3z"
-                                    clip-rule="evenodd" />
-                            </svg>
+                        <a type="button" onclick="lanjutDariProgram()" class="step-nav flex items-center gap-2 cursor-pointer drop-shadow-[0_3px_3px_rgba(0,0,0,0.3)]">
+                            <label class="text-gray-900 font-medium lg:text-xl text-4xl cursor-pointer">LANJUT</label>
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-8 h-8 text-gray-900"><path fill-rule="evenodd" d="{{ $arrowNext }}" clip-rule="evenodd" /></svg>
                         </a>
                     </div>
                 </div>
-                </div> --}}
+                </div>
 
+                {{-- 3. RINCIAN PROGRAM --}}
+                <div id="rincian" class=" items-center relative isolate  min-w-full h-screen px-6 shadow-2xl sm:px-16 lg:px-24">
+                <div class="text-left flex flex-col lg:py-14 lg:px-12 py-8 px-6 lg:text-left w-full justify-between">
+                    <label class="max-w-md text-left font-bold tracking-tight mb-2 text-gray-900 lg:text-2xl text-4xl">
+                        Pilih rincian program
+                    </label>
+                    <p class="ppm-hint">Program: <b id="programNama">-</b></p>
+                    <div id="rincianList" class="ppm-scroll"></div>
+                    <div class="step-actions flex justify-between mt-5">
+                        <a type="button" onclick="window.location='#program'" class="step-nav flex items-center gap-2 cursor-pointer drop-shadow-[0_3px_3px_rgba(0,0,0,0.3)]">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-8 h-8 text-gray-900"><path fill-rule="evenodd" d="{{ $arrowPrev }}" clip-rule="evenodd" /></svg>
+                            <label class="text-gray-900 font-medium lg:text-xl text-4xl cursor-pointer">SEBELUM</label>
+                        </a>
+                        <a type="button" onclick="lanjutDariRincian()" class="step-nav flex items-center gap-2 cursor-pointer drop-shadow-[0_3px_3px_rgba(0,0,0,0.3)]">
+                            <label class="text-gray-900 font-medium lg:text-xl text-4xl cursor-pointer">LANJUT</label>
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-8 h-8 text-gray-900"><path fill-rule="evenodd" d="{{ $arrowNext }}" clip-rule="evenodd" /></svg>
+                        </a>
+                    </div>
+                </div>
+                </div>
+
+                {{-- 4. PERUSAHAAN PELAKSANA --}}
+                <div id="perusahaan" class=" items-center relative isolate  min-w-full h-screen px-6 shadow-2xl sm:px-16 lg:px-24">
+                <div class="text-left flex flex-col lg:py-14 lg:px-12 py-8 px-6 lg:text-left w-full justify-between">
+                    <label class="text-left font-bold tracking-tight mb-2 text-gray-900 lg:text-2xl text-4xl">
+                        Menurut Anda, perusahaan mana yang melaksanakan program ini?
+                    </label>
+                    <p class="ppm-hint"><b id="rincianNama">-</b> &middot; Desa <span class="js-desa-nama">-</span></p>
+                    <div id="perusahaanList" class="ppm-scroll"></div>
+                    <div class="step-actions flex justify-between mt-5">
+                        <a type="button" onclick="window.location='#rincian'" class="step-nav flex items-center gap-2 cursor-pointer drop-shadow-[0_3px_3px_rgba(0,0,0,0.3)]">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-8 h-8 text-gray-900"><path fill-rule="evenodd" d="{{ $arrowPrev }}" clip-rule="evenodd" /></svg>
+                            <label class="text-gray-900 font-medium lg:text-xl text-4xl cursor-pointer">SEBELUM</label>
+                        </a>
+                        <a type="button" onclick="lanjutDariPerusahaan()" class="step-nav flex items-center gap-2 cursor-pointer drop-shadow-[0_3px_3px_rgba(0,0,0,0.3)]">
+                            <label class="text-gray-900 font-medium lg:text-xl text-4xl cursor-pointer">LANJUT</label>
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-8 h-8 text-gray-900"><path fill-rule="evenodd" d="{{ $arrowNext }}" clip-rule="evenodd" /></svg>
+                        </a>
+                    </div>
+                </div>
+                </div>
+
+                {{-- 5. IDENTITAS (dilewati bila responden lanjutan) --}}
                 <div id="identitas"
-                class=" items-center relative isolate  min-w-full h-screen px-6 shadow-2xl sm:px-16 lg:px-24 bg-gradient-to-br from-[#18bdde] from-60%  to-[#fffb61] to-95%">
+                class=" items-center relative isolate  min-w-full h-screen px-6 shadow-2xl sm:px-16 lg:px-24">
 
                 <div class="text-left flex flex-col lg:py-14 lg:px-12 py-8 px-6 lg:text-left w-full justify-between">
                     <div class="identity-copy">
@@ -1048,48 +1063,60 @@ if (empty($bagianList)) {
                             class="max-w-md text-left font-bold tracking-tight mb-2 whitespace-nowrap mb-3 text-gray-900 lg:text-2xl text-4xl drop-shadow-[0_1px_1px_rgba(0,0,0,0.3)]">
                             Lengkapi data identitas Anda
                         </label>
-                        <p>Masukkan nama, nomor telepon, jenis kelamin, dan alamat sebelum lanjut ke biodata lainnya.</p>
+                        <p>Identitas cukup diisi sekali. Setelah menyimpan, Anda dapat menilai program lain tanpa mengisi ulang.</p>
                     </div>
 
                     <div class="biodataIdentity">
-                        <!-- NIK input removed as per request -->
                         <div>
                             <label for="nama">Nama</label>
-                            <input type="text" id="nama" name="nama" value="{{ old('nama') }}" placeholder="Masukkan nama lengkap" required>
+                            <input type="text" id="nama" name="nama" value="{{ old('nama') }}" placeholder="Masukkan nama lengkap" maxlength="150">
                         </div>
-                        <div style="display:none"></div>
+                        <div>
+                            <label for="desaTampil">Desa</label>
+                            <input type="text" id="desaTampil" value="" readonly tabindex="-1" style="background:#f5f5f4">
+                        </div>
                     </div>
 
                     <div class="biodataIdentity">
                         <div>
                             <label for="nohp">No. Telp</label>
-                            <input type="text" id="nohp" name="nohp" value="{{ old('nohp') }}" placeholder="Masukkan nomor telepon" required>
+                            <input type="text" id="nohp" name="nohp" value="{{ old('nohp') }}" placeholder="Masukkan nomor telepon" maxlength="16">
                         </div>
                         <div>
                             <label>Jenis Kelamin</label>
                             <div class="identity-radio-grid">
-                                <div>
-                                    <input type="radio" id="identitas-laki" name="jenkel[jenkel]" value="Laki - Laki"
-                                        {{ old('jenkel.jenkel', 'Laki - Laki') == 'Laki - Laki' ? 'checked' : '' }}
-                                        class="hidden scroll-btn peer">
-                                    <label for="identitas-laki"
-                                        class="inline-flex items-center justify-between w-full p-3 text-gray-900 bg-transparent border-2 drop-shadow-[0_3px_3px_rgba(0,0,0,0.3)] border-white rounded-lg cursor-pointer peer-checked:border-white peer-checked:bg-white peer-checked:text-gray-800 hover:text-gray-900 hover:bg-white">
-                                        <div class="block">
-                                            <div class="w-full lg:text-lg lg:text-2xl text-4xl font-semibold">Laki - Laki</div>
-                                        </div>
-                                    </label>
-                                </div>
-                                <div>
-                                    <input type="radio" id="identitas-perempuan" name="jenkel[jenkel]" value="Perempuan"
-                                        {{ old('jenkel.jenkel') == 'Perempuan' ? 'checked' : '' }}
-                                        class="hidden scroll-btn peer">
-                                    <label for="identitas-perempuan"
-                                        class="inline-flex items-center justify-between w-full p-3 text-gray-900 bg-transparent border-2 drop-shadow-[0_3px_3px_rgba(0,0,0,0.3)] border-white rounded-lg cursor-pointer peer-checked:border-white peer-checked:bg-white peer-checked:text-gray-800 hover:text-gray-900 hover:bg-white">
-                                        <div class="block">
-                                            <div class="w-full lg:text-lg lg:text-2xl text-4xl font-semibold">Perempuan</div>
-                                        </div>
-                                    </label>
-                                </div>
+                                @foreach (\App\Support\SurveyOptions::JENKEL as $idx => $jk)
+                                    <div>
+                                        <input type="radio" id="identitas-jk{{ $idx }}" name="jenkel" value="{{ $jk }}"
+                                            {{ old('jenkel', 'Laki - Laki') == $jk ? 'checked' : '' }}
+                                            class="hidden scroll-btn peer">
+                                        <label for="identitas-jk{{ $idx }}"
+                                            class="inline-flex items-center justify-between w-full p-3 text-gray-900 bg-transparent border-2 drop-shadow-[0_3px_3px_rgba(0,0,0,0.3)] border-white rounded-lg cursor-pointer peer-checked:border-white peer-checked:bg-white peer-checked:text-gray-800 hover:text-gray-900 hover:bg-white">
+                                            <div class="block">
+                                                <div class="w-full lg:text-lg lg:text-2xl text-4xl font-semibold">{{ $jk }}</div>
+                                            </div>
+                                        </label>
+                                    </div>
+                                @endforeach
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="biodataIdentity biodataIdentity--single">
+                        <div>
+                            <label>Jenis Responden</label>
+                            <div class="identity-radio-grid" style="grid-template-columns:repeat(auto-fit,minmax(150px,1fr))">
+                                @foreach ($jenisRespondenOptions as $idx => $jr)
+                                    <div>
+                                        <input type="radio" id="jenis-responden{{ $idx }}" name="jenis_responden" value="{{ $jr }}"
+                                            {{ old('jenis_responden') == $jr ? 'checked' : '' }}
+                                            class="hidden scroll-btn peer radio-jenis-responden">
+                                        <label for="jenis-responden{{ $idx }}"
+                                            class="inline-flex items-center justify-between w-full p-3 text-gray-900 bg-transparent border-2 drop-shadow-[0_3px_3px_rgba(0,0,0,0.3)] border-white rounded-lg cursor-pointer peer-checked:border-white peer-checked:bg-white peer-checked:text-gray-800 hover:text-gray-900 hover:bg-white">
+                                            <div class="w-full lg:text-lg text-xl font-semibold">{{ $jr }}</div>
+                                        </label>
+                                    </div>
+                                @endforeach
                             </div>
                         </div>
                     </div>
@@ -1097,30 +1124,18 @@ if (empty($bagianList)) {
                     <div class="biodataIdentity biodataIdentity--single">
                         <div>
                             <label for="alamat">Alamat</label>
-                            <textarea id="alamat" name="alamat" placeholder="Masukkan alamat lengkap" required>{{ old('alamat') }}</textarea>
+                            <textarea id="alamat" name="alamat" placeholder="Masukkan alamat (RT/dusun)" maxlength="300">{{ old('alamat') }}</textarea>
                         </div>
                     </div>
 
                     <div class="step-actions flex justify-between mt-5">
-                        <a type="button" onclick="window.location='#awal'"
-                            class="flex items-center gap-2 cursor-pointer drop-shadow-[0_3px_3px_rgba(0,0,0,0.3)]">
-                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"
-                                class="w-8 h-8 text-gray-900">
-                                <path fill-rule="evenodd"
-                                    d="M12 2.25c-5.385 0-9.75 4.365-9.75 9.75s4.365 9.75 9.75 9.75 9.75-4.365 9.75-9.75S17.385 2.25 12 2.25zm-4.28 9.22a.75.75 0 000 1.06l3 3a.75.75 0 101.06-1.06l-1.72-1.72h5.69a.75.75 0 000-1.5h-5.69l1.72-1.72a.75.75 0 00-1.06-1.06l-3 3z"
-                                    clip-rule="evenodd" />
-                            </svg>
+                        <a type="button" onclick="window.location='#perusahaan'" class="step-nav flex items-center gap-2 cursor-pointer drop-shadow-[0_3px_3px_rgba(0,0,0,0.3)]">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-8 h-8 text-gray-900"><path fill-rule="evenodd" d="{{ $arrowPrev }}" clip-rule="evenodd" /></svg>
                             <label class="text-gray-900 font-medium lg:text-xl text-4xl cursor-pointer">SEBELUM</label>
                         </a>
-                        <a type="button" onclick="lanjutDariIdentitas()"
-                            class="flex items-center gap-2 cursor-pointer drop-shadow-[0_3px_3px_rgba(0,0,0,0.3)]">
+                        <a type="button" onclick="lanjutDariIdentitas()" class="step-nav flex items-center gap-2 cursor-pointer drop-shadow-[0_3px_3px_rgba(0,0,0,0.3)]">
                             <label class="text-gray-900 font-medium lg:text-xl text-4xl cursor-pointer">LANJUT</label>
-                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"
-                                class="w-8 h-8 text-gray-900">
-                                <path fill-rule="evenodd"
-                                    d="M12 2.25c-5.385 0-9.75 4.365-9.75 9.75s4.365 9.75 9.75 9.75 9.75-4.365 9.75-9.75S17.385 2.25 12 2.25zm4.28 10.28a.75.75 0 000-1.06l-3-3a.75.75 0 10-1.06 1.06l1.72 1.72H8.25a.75.75 0 000 1.5h5.69l-1.72 1.72a.75.75 0 101.06 1.06l3-3z"
-                                    clip-rule="evenodd" />
-                            </svg>
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-8 h-8 text-gray-900"><path fill-rule="evenodd" d="{{ $arrowNext }}" clip-rule="evenodd" /></svg>
                         </a>
                     </div>
                 </div>
@@ -1177,7 +1192,7 @@ if (empty($bagianList)) {
                                 </label>
                             </li>
                             <li>
-                                <input type="radio" id="51" name="usia" value="51 "
+                                <input type="radio" id="51" name="usia" value="51"
                                     class="hidden scroll-btn peer">
                                 <label for="51"
                                     class="inline-flex items-center justify-between w-full p-3 text-gray-900 bg-white border-2 border-white rounded-lg cursor-pointer  peer-checked:bg-gray-800  peer-checked:text-white hover:text-gray-900 hover:bg-gray-400 ">
@@ -1373,12 +1388,12 @@ if (empty($bagianList)) {
                 class="items-center relative isolate min-w-full h-screen px-4 sm:px-6 lg:px-16
                 bg-gradient-to-br from-[#fff5e6] via-[#ffecd6] to-[#ffd9b0]">
                 <div class="flex flex-col items-stretch gap-4 w-full h-full py-[72px] max-w-2xl mx-auto justify-center">
-                    <div class="w-full flex flex-col p-6 bg-white rounded-2xl shadow-[0_8px_32px_rgba(146,76,0,0.12)] justify-center">
-                        <div class="w-12 h-12 bg-orange-50 rounded-xl flex items-center justify-center mb-4">
-                            <span class="material-symbols-outlined text-[#ff8800] text-3xl">checklist</span>
+                    <div class="w-full flex flex-col p-6 bg-white rounded-2xl shadow-[0_8px_32px_rgba(146,76,0,0.12)] y-center">
+                        <div class="w-12 h-12 bg-orange-50 rounded-xl flex items-center justify-center mb-4 gap-3">
+                            <span class="material-symbols-outlined text-[#ff8800] text-2xl">fact_check</span>
                         </div>
-                        <p class="font-bold uppercase tracking-widest text-xs text-[#924c00] mb-2">Pertanyaan 1 dari 9</p>
-                        <h2 class="text-lg xl:text-xl font-semibold leading-snug text-[#191c1d]">Bagaimana pendapat Saudara tentang kesesuaian persyaratan pelayanan dengan jenis pelayanannya?</h2>
+                        <p class="font-bold uppercase tracking-widest text-xs text-[#924c00] mb-2">Kesesuaian Program</p>
+                        <h2 class="text-lg xl:text-xl font-semibold leading-snug text-[#191c1d]">Menurut Anda, apakah program PPM yang dilaksanakan telah sesuai dengan kebutuhan masyarakat di wilayah Anda?</h2>
                     </div>
                     <div class="w-full flex flex-col gap-3">
                         <div>
@@ -1410,8 +1425,8 @@ if (empty($bagianList)) {
                             </label>
                         </div>
                         <div class="step-actions flex justify-between mt-3">
-                            <a type="button" onclick="window.location='#kedua'"
-                                class="flex items-center gap-2 cursor-pointer text-[#924c00] font-semibold text-sm hover:text-[#ff8800] transition-colors">
+                            <a type="button" onclick="kembaliDariSatu()"
+                                class="step-nav flex items-center gap-2 cursor-pointer text-[#924c00] font-semibold text-sm hover:text-[#ff8800] transition-colors">
                                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-6 h-6">
                                     <path fill-rule="evenodd" d="M12 2.25c-5.385 0-9.75 4.365-9.75 9.75s4.365 9.75 9.75 9.75 9.75-4.365 9.75-9.75S17.385 2.25 12 2.25zm-4.28 9.22a.75.75 0 000 1.06l3 3a.75.75 0 101.06-1.06l-1.72-1.72h5.69a.75.75 0 000-1.5h-5.69l1.72-1.72a.75.75 0 00-1.06-1.06l-3 3z" clip-rule="evenodd" />
                                 </svg>
@@ -1433,39 +1448,39 @@ if (empty($bagianList)) {
                 bg-gradient-to-br from-[#fff5e6] via-[#ffecd6] to-[#ffd9b0]">
                 <div class="flex flex-col items-stretch gap-4 w-full h-full py-[72px] max-w-2xl mx-auto justify-center">
                     <div class="w-full flex flex-col p-6 bg-white rounded-2xl shadow-[0_8px_32px_rgba(146,76,0,0.12)] justify-center">
-                        <div class="w-12 h-12 bg-orange-50 rounded-xl flex items-center justify-center mb-4">
-                            <span class="material-symbols-outlined text-[#ff8800] text-3xl">account_tree</span>
+                        <div class="w-12 h-12 bg-orange-50 rounded-xl flex items-center justify-center mb-4 gap-3">
+                            <span class="material-symbols-outlined text-[#ff8800] text-2xl">task_alt</span>
                         </div>
-                        <p class="font-bold uppercase tracking-widest text-xs text-[#924c00] mb-2">Pertanyaan 2 dari 9</p>
-                        <h2 class="text-lg xl:text-xl font-semibold leading-snug text-[#191c1d]">Bagaimana pendapat Saudara tentang kemudahan prosedur pelayanan pada unit layanan ini?</h2>
+                        <p class="font-bold uppercase tracking-widest text-xs text-[#924c00] mb-2">Kualitas Pelaksanaan</p>
+                        <h2 class="text-lg xl:text-xl font-semibold leading-snug text-[#191c1d]">Menurut Anda, apakah kegiatan PPM telah dilaksanakan dengan baik, tertib, dan sesuai dengan rencana yang disampaikan?</h2>
                     </div>
                     <div class="w-full flex flex-col gap-3">
                         <div>
                             <input type="radio" id="u2-1" name="u2" value="1" class="hidden scroll-btn peer">
                             <label for="u2-1"
                                 class="flex items-center px-5 py-4 rounded-xl border-2 border-orange-100 bg-white/80 text-[#3d2000] cursor-pointer hover:bg-white hover:border-orange-300 hover:shadow-md transition-all duration-200 peer-checked:bg-[#1c1917] peer-checked:text-white peer-checked:border-[#ff8800] peer-checked:shadow-lg">
-                                <span class="font-semibold text-base lg:text-lg">Tidak Mudah</span>
+                                <span class="font-semibold text-base lg:text-lg">Tidak Baik</span>
                             </label>
                         </div>
                         <div>
                             <input type="radio" id="u2-2" name="u2" value="2" class="hidden scroll-btn peer">
                             <label for="u2-2"
                                 class="flex items-center px-5 py-4 rounded-xl border-2 border-orange-100 bg-white/80 text-[#3d2000] cursor-pointer hover:bg-white hover:border-orange-300 hover:shadow-md transition-all duration-200 peer-checked:bg-[#1c1917] peer-checked:text-white peer-checked:border-[#ff8800] peer-checked:shadow-lg">
-                                <span class="font-semibold text-base lg:text-lg">Kurang Mudah</span>
+                                <span class="font-semibold text-base lg:text-lg">Kurang Baik</span>
                             </label>
                         </div>
                         <div>
                             <input type="radio" id="u2-3" name="u2" value="3" class="hidden scroll-btn peer">
                             <label for="u2-3"
                                 class="flex items-center px-5 py-4 rounded-xl border-2 border-orange-100 bg-white/80 text-[#3d2000] cursor-pointer hover:bg-white hover:border-orange-300 hover:shadow-md transition-all duration-200 peer-checked:bg-[#1c1917] peer-checked:text-white peer-checked:border-[#ff8800] peer-checked:shadow-lg">
-                                <span class="font-semibold text-base lg:text-lg">Mudah</span>
+                                <span class="font-semibold text-base lg:text-lg">Baik</span>
                             </label>
                         </div>
                         <div>
                             <input type="radio" id="u2-4" name="u2" value="4" checked class="hidden scroll-btn peer">
                             <label for="u2-4"
                                 class="flex items-center px-5 py-4 rounded-xl border-2 border-orange-100 bg-white/80 text-[#3d2000] cursor-pointer hover:bg-white hover:border-orange-300 hover:shadow-md transition-all duration-200 peer-checked:bg-[#1c1917] peer-checked:text-white peer-checked:border-[#ff8800] peer-checked:shadow-lg">
-                                <span class="font-semibold text-base lg:text-lg">Sangat Mudah</span>
+                                <span class="font-semibold text-base lg:text-lg">Sangat Baik</span>
                             </label>
                         </div>
                         <div class="step-actions flex justify-between mt-3">
@@ -1492,39 +1507,39 @@ if (empty($bagianList)) {
                 bg-gradient-to-br from-[#fff5e6] via-[#ffecd6] to-[#ffd9b0]">
                 <div class="flex flex-col items-stretch gap-4 w-full h-full py-[72px] max-w-2xl mx-auto justify-center">
                     <div class="w-full flex flex-col p-6 bg-white rounded-2xl shadow-[0_8px_32px_rgba(146,76,0,0.12)] justify-center">
-                        <div class="w-12 h-12 bg-orange-50 rounded-xl flex items-center justify-center mb-4">
-                            <span class="material-symbols-outlined text-[#ff8800] text-3xl">schedule</span>
+                        <div class="w-12 h-12 bg-orange-50 rounded-xl flex items-center justify-center mb-4 gap-3">
+                            <span class="material-symbols-outlined text-[#ff8800] text-2xl">autorenew</span>
                         </div>
-                        <p class="font-bold uppercase tracking-widest text-xs text-[#924c00] mb-2">Pertanyaan 3 dari 9</p>
-                        <h2 class="text-lg xl:text-xl font-semibold leading-snug text-[#191c1d]">Bagaimana pendapat Saudara tentang kecepatan waktu pelayanan pada unit layanan ini?</h2>
+                        <p class="font-bold uppercase tracking-widest text-xs text-[#924c00] mb-2">Keberlanjutan</p>
+                        <h2 class="text-lg xl:text-xl font-semibold leading-snug text-[#191c1d]">Menurut Anda, apakah manfaat program PPM dapat terus dirasakan oleh masyarakat dalam jangka panjang?</h2>
                     </div>
                     <div class="w-full flex flex-col gap-3">
                         <div>
                             <input type="radio" id="u3-1" name="u3" value="1" class="hidden scroll-btn peer">
                             <label for="u3-1"
                                 class="flex items-center px-5 py-4 rounded-xl border-2 border-orange-100 bg-white/80 text-[#3d2000] cursor-pointer hover:bg-white hover:border-orange-300 hover:shadow-md transition-all duration-200 peer-checked:bg-[#1c1917] peer-checked:text-white peer-checked:border-[#ff8800] peer-checked:shadow-lg">
-                                <span class="font-semibold text-base lg:text-lg">Tidak Cepat</span>
+                                <span class="font-semibold text-base lg:text-lg">Tidak Berkelanjutan</span>
                             </label>
                         </div>
                         <div>
                             <input type="radio" id="u3-2" name="u3" value="2" class="hidden scroll-btn peer">
                             <label for="u3-2"
                                 class="flex items-center px-5 py-4 rounded-xl border-2 border-orange-100 bg-white/80 text-[#3d2000] cursor-pointer hover:bg-white hover:border-orange-300 hover:shadow-md transition-all duration-200 peer-checked:bg-[#1c1917] peer-checked:text-white peer-checked:border-[#ff8800] peer-checked:shadow-lg">
-                                <span class="font-semibold text-base lg:text-lg">Kurang Cepat</span>
+                                <span class="font-semibold text-base lg:text-lg">Kurang Berkelanjutan</span>
                             </label>
                         </div>
                         <div>
                             <input type="radio" id="u3-3" name="u3" value="3" class="hidden scroll-btn peer">
                             <label for="u3-3"
                                 class="flex items-center px-5 py-4 rounded-xl border-2 border-orange-100 bg-white/80 text-[#3d2000] cursor-pointer hover:bg-white hover:border-orange-300 hover:shadow-md transition-all duration-200 peer-checked:bg-[#1c1917] peer-checked:text-white peer-checked:border-[#ff8800] peer-checked:shadow-lg">
-                                <span class="font-semibold text-base lg:text-lg">Cepat</span>
+                                <span class="font-semibold text-base lg:text-lg">Berkelanjutan</span>
                             </label>
                         </div>
                         <div>
                             <input type="radio" id="u3-4" name="u3" value="4" checked class="hidden scroll-btn peer">
                             <label for="u3-4"
                                 class="flex items-center px-5 py-4 rounded-xl border-2 border-orange-100 bg-white/80 text-[#3d2000] cursor-pointer hover:bg-white hover:border-orange-300 hover:shadow-md transition-all duration-200 peer-checked:bg-[#1c1917] peer-checked:text-white peer-checked:border-[#ff8800] peer-checked:shadow-lg">
-                                <span class="font-semibold text-base lg:text-lg">Sangat Cepat</span>
+                                <span class="font-semibold text-base lg:text-lg">Sangat Berkelanjutan</span>
                             </label>
                         </div>
                         <div class="step-actions flex justify-between mt-3">
@@ -1551,39 +1566,39 @@ if (empty($bagianList)) {
                 bg-gradient-to-br from-[#fff5e6] via-[#ffecd6] to-[#ffd9b0]">
                 <div class="flex flex-col items-stretch gap-4 w-full h-full py-[72px] max-w-2xl mx-auto justify-center">
                     <div class="w-full flex flex-col p-6 bg-white rounded-2xl shadow-[0_8px_32px_rgba(146,76,0,0.12)] justify-center">
-                        <div class="w-12 h-12 bg-orange-50 rounded-xl flex items-center justify-center mb-4">
-                            <span class="material-symbols-outlined text-[#ff8800] text-3xl">payments</span>
+                        <div class="w-12 h-12 bg-orange-50 rounded-xl flex items-center justify-center mb-4 gap-3">
+                            <span class="material-symbols-outlined text-[#ff8800] text-2xl">info</span>
                         </div>
-                        <p class="font-bold uppercase tracking-widest text-xs text-[#924c00] mb-2">Pertanyaan 4 dari 9</p>
-                        <h2 class="text-lg xl:text-xl font-semibold leading-snug text-[#191c1d]">Bagaimana pendapat Saudara tentang kewajaran biaya/tarif untuk mendapatkan pelayanan?</h2>
+                        <p class="font-bold uppercase tracking-widest text-xs text-[#924c00] mb-2">Kejelasan Informasi</p>
+                        <h2 class="text-lg xl:text-xl font-semibold leading-snug text-[#191c1d]">Menurut Anda, apakah informasi mengenai tujuan, manfaat, dan pelaksanaan program PPM telah disampaikan dengan jelas dan mudah dipahami?</h2>
                     </div>
                     <div class="w-full flex flex-col gap-3">
                         <div>
                             <input type="radio" id="u4-1" name="u4" value="1" class="hidden scroll-btn peer">
                             <label for="u4-1"
                                 class="flex items-center px-5 py-4 rounded-xl border-2 border-orange-100 bg-white/80 text-[#3d2000] cursor-pointer hover:bg-white hover:border-orange-300 hover:shadow-md transition-all duration-200 peer-checked:bg-[#1c1917] peer-checked:text-white peer-checked:border-[#ff8800] peer-checked:shadow-lg">
-                                <span class="font-semibold text-base lg:text-lg">Sangat Mahal</span>
+                                <span class="font-semibold text-base lg:text-lg">Tidak Jelas</span>
                             </label>
                         </div>
                         <div>
                             <input type="radio" id="u4-2" name="u4" value="2" class="hidden scroll-btn peer">
                             <label for="u4-2"
                                 class="flex items-center px-5 py-4 rounded-xl border-2 border-orange-100 bg-white/80 text-[#3d2000] cursor-pointer hover:bg-white hover:border-orange-300 hover:shadow-md transition-all duration-200 peer-checked:bg-[#1c1917] peer-checked:text-white peer-checked:border-[#ff8800] peer-checked:shadow-lg">
-                                <span class="font-semibold text-base lg:text-lg">Cukup Mahal</span>
+                                <span class="font-semibold text-base lg:text-lg">Kurang Jelas</span>
                             </label>
                         </div>
                         <div>
                             <input type="radio" id="u4-3" name="u4" value="3" class="hidden scroll-btn peer">
                             <label for="u4-3"
                                 class="flex items-center px-5 py-4 rounded-xl border-2 border-orange-100 bg-white/80 text-[#3d2000] cursor-pointer hover:bg-white hover:border-orange-300 hover:shadow-md transition-all duration-200 peer-checked:bg-[#1c1917] peer-checked:text-white peer-checked:border-[#ff8800] peer-checked:shadow-lg">
-                                <span class="font-semibold text-base lg:text-lg">Murah</span>
+                                <span class="font-semibold text-base lg:text-lg">Jelas</span>
                             </label>
                         </div>
                         <div>
                             <input type="radio" id="u4-4" name="u4" value="4" checked class="hidden scroll-btn peer">
                             <label for="u4-4"
                                 class="flex items-center px-5 py-4 rounded-xl border-2 border-orange-100 bg-white/80 text-[#3d2000] cursor-pointer hover:bg-white hover:border-orange-300 hover:shadow-md transition-all duration-200 peer-checked:bg-[#1c1917] peer-checked:text-white peer-checked:border-[#ff8800] peer-checked:shadow-lg">
-                                <span class="font-semibold text-base lg:text-lg">Gratis</span>
+                                <span class="font-semibold text-base lg:text-lg">Sangat Jelas</span>
                             </label>
                         </div>
                         <div class="step-actions flex justify-between mt-3">
@@ -1610,39 +1625,39 @@ if (empty($bagianList)) {
                 bg-gradient-to-br from-[#fff5e6] via-[#ffecd6] to-[#ffd9b0]">
                 <div class="flex flex-col items-stretch gap-4 w-full h-full py-[72px] max-w-2xl mx-auto justify-center">
                     <div class="w-full flex flex-col p-6 bg-white rounded-2xl shadow-[0_8px_32px_rgba(146,76,0,0.12)] justify-center">
-                        <div class="w-12 h-12 bg-orange-50 rounded-xl flex items-center justify-center mb-4">
-                            <span class="material-symbols-outlined text-[#ff8800] text-3xl">verified</span>
+                        <div class="w-12 h-12 bg-orange-50 rounded-xl flex items-center justify-center mb-4 gap-3">
+                            <span class="material-symbols-outlined text-[#ff8800] text-2xl">workspace_premium</span>
                         </div>
-                        <p class="font-bold uppercase tracking-widest text-xs text-[#924c00] mb-2">Pertanyaan 5 dari 9</p>
-                        <h2 class="text-lg xl:text-xl font-semibold leading-snug text-[#191c1d]">Bagaimana pendapat Saudara tentang kesesuaian produk pelayanan antara yang tercantum dalam standar pelayanan dengan hasil yang diberikan?</h2>
+                        <p class="font-bold uppercase tracking-widest text-xs text-[#924c00] mb-2">Kompetensi Tim</p>
+                        <h2 class="text-lg xl:text-xl font-semibold leading-snug text-[#191c1d]">Menurut Anda, apakah tim pelaksana program memiliki kemampuan dan pengetahuan yang memadai dalam menjalankan kegiatan PPM?</h2>
                     </div>
                     <div class="w-full flex flex-col gap-3">
                         <div>
                             <input type="radio" id="u5-1" name="u5" value="1" class="hidden scroll-btn peer">
                             <label for="u5-1"
                                 class="flex items-center px-5 py-4 rounded-xl border-2 border-orange-100 bg-white/80 text-[#3d2000] cursor-pointer hover:bg-white hover:border-orange-300 hover:shadow-md transition-all duration-200 peer-checked:bg-[#1c1917] peer-checked:text-white peer-checked:border-[#ff8800] peer-checked:shadow-lg">
-                                <span class="font-semibold text-base lg:text-lg">Tidak Sesuai</span>
+                                <span class="font-semibold text-base lg:text-lg">Tidak Kompeten</span>
                             </label>
                         </div>
                         <div>
                             <input type="radio" id="u5-2" name="u5" value="2" class="hidden scroll-btn peer">
                             <label for="u5-2"
                                 class="flex items-center px-5 py-4 rounded-xl border-2 border-orange-100 bg-white/80 text-[#3d2000] cursor-pointer hover:bg-white hover:border-orange-300 hover:shadow-md transition-all duration-200 peer-checked:bg-[#1c1917] peer-checked:text-white peer-checked:border-[#ff8800] peer-checked:shadow-lg">
-                                <span class="font-semibold text-base lg:text-lg">Kurang Sesuai</span>
+                                <span class="font-semibold text-base lg:text-lg">Kurang Kompeten</span>
                             </label>
                         </div>
                         <div>
                             <input type="radio" id="u5-3" name="u5" value="3" class="hidden scroll-btn peer">
                             <label for="u5-3"
                                 class="flex items-center px-5 py-4 rounded-xl border-2 border-orange-100 bg-white/80 text-[#3d2000] cursor-pointer hover:bg-white hover:border-orange-300 hover:shadow-md transition-all duration-200 peer-checked:bg-[#1c1917] peer-checked:text-white peer-checked:border-[#ff8800] peer-checked:shadow-lg">
-                                <span class="font-semibold text-base lg:text-lg">Sesuai</span>
+                                <span class="font-semibold text-base lg:text-lg">Kompeten</span>
                             </label>
                         </div>
                         <div>
                             <input type="radio" id="u5-4" name="u5" value="4" checked class="hidden scroll-btn peer">
                             <label for="u5-4"
                                 class="flex items-center px-5 py-4 rounded-xl border-2 border-orange-100 bg-white/80 text-[#3d2000] cursor-pointer hover:bg-white hover:border-orange-300 hover:shadow-md transition-all duration-200 peer-checked:bg-[#1c1917] peer-checked:text-white peer-checked:border-[#ff8800] peer-checked:shadow-lg">
-                                <span class="font-semibold text-base lg:text-lg">Sangat Sesuai</span>
+                                <span class="font-semibold text-base lg:text-lg">Sangat Kompeten</span>
                             </label>
                         </div>
                         <div class="step-actions flex justify-between mt-3">
@@ -1669,39 +1684,39 @@ if (empty($bagianList)) {
                 bg-gradient-to-br from-[#fff5e6] via-[#ffecd6] to-[#ffd9b0]">
                 <div class="flex flex-col items-stretch gap-4 w-full h-full py-[72px] max-w-2xl mx-auto justify-center">
                     <div class="w-full flex flex-col p-6 bg-white rounded-2xl shadow-[0_8px_32px_rgba(146,76,0,0.12)] justify-center">
-                        <div class="w-12 h-12 bg-orange-50 rounded-xl flex items-center justify-center mb-4">
-                            <span class="material-symbols-outlined text-[#ff8800] text-3xl">school</span>
+                        <div class="w-12 h-12 bg-orange-50 rounded-xl flex items-center justify-center mb-4 gap-3">
+                            <span class="material-symbols-outlined text-[#ff8800] text-2xl">accessibility_new</span>
                         </div>
-                        <p class="font-bold uppercase tracking-widest text-xs text-[#924c00] mb-2">Pertanyaan 6 dari 9</p>
-                        <h2 class="text-lg xl:text-xl font-semibold leading-snug text-[#191c1d]">Bagaimana pendapat Saudara tentang kompetensi/ kemampuan petugas dalam pelayanan?</h2>
+                        <p class="font-bold uppercase tracking-widest text-xs text-[#924c00] mb-2">Kemudahan Akses</p>
+                        <h2 class="text-lg xl:text-xl font-semibold leading-snug text-[#191c1d]">Menurut Anda, apakah masyarakat mudah mengakses dan mengikuti program PPM yang diselenggarakan?</h2>
                     </div>
                     <div class="w-full flex flex-col gap-3">
                         <div>
                             <input type="radio" id="u6-1" name="u6" value="1" class="hidden scroll-btn peer">
                             <label for="u6-1"
                                 class="flex items-center px-5 py-4 rounded-xl border-2 border-orange-100 bg-white/80 text-[#3d2000] cursor-pointer hover:bg-white hover:border-orange-300 hover:shadow-md transition-all duration-200 peer-checked:bg-[#1c1917] peer-checked:text-white peer-checked:border-[#ff8800] peer-checked:shadow-lg">
-                                <span class="font-semibold text-base lg:text-lg">Tidak Kompeten</span>
+                                <span class="font-semibold text-base lg:text-lg">Tidak Mudah</span>
                             </label>
                         </div>
                         <div>
                             <input type="radio" id="u6-2" name="u6" value="2" class="hidden scroll-btn peer">
                             <label for="u6-2"
                                 class="flex items-center px-5 py-4 rounded-xl border-2 border-orange-100 bg-white/80 text-[#3d2000] cursor-pointer hover:bg-white hover:border-orange-300 hover:shadow-md transition-all duration-200 peer-checked:bg-[#1c1917] peer-checked:text-white peer-checked:border-[#ff8800] peer-checked:shadow-lg">
-                                <span class="font-semibold text-base lg:text-lg">Kurang Kompeten</span>
+                                <span class="font-semibold text-base lg:text-lg">Kurang Mudah</span>
                             </label>
                         </div>
                         <div>
                             <input type="radio" id="u6-3" name="u6" value="3" class="hidden scroll-btn peer">
                             <label for="u6-3"
                                 class="flex items-center px-5 py-4 rounded-xl border-2 border-orange-100 bg-white/80 text-[#3d2000] cursor-pointer hover:bg-white hover:border-orange-300 hover:shadow-md transition-all duration-200 peer-checked:bg-[#1c1917] peer-checked:text-white peer-checked:border-[#ff8800] peer-checked:shadow-lg">
-                                <span class="font-semibold text-base lg:text-lg">Kompeten</span>
+                                <span class="font-semibold text-base lg:text-lg">Mudah</span>
                             </label>
                         </div>
                         <div>
                             <input type="radio" id="u6-4" name="u6" value="4" checked class="hidden scroll-btn peer">
                             <label for="u6-4"
                                 class="flex items-center px-5 py-4 rounded-xl border-2 border-orange-100 bg-white/80 text-[#3d2000] cursor-pointer hover:bg-white hover:border-orange-300 hover:shadow-md transition-all duration-200 peer-checked:bg-[#1c1917] peer-checked:text-white peer-checked:border-[#ff8800] peer-checked:shadow-lg">
-                                <span class="font-semibold text-base lg:text-lg">Sangat Kompeten</span>
+                                <span class="font-semibold text-base lg:text-lg">Sangat Mudah</span>
                             </label>
                         </div>
                         <div class="step-actions flex justify-between mt-3">
@@ -1728,11 +1743,11 @@ if (empty($bagianList)) {
                 bg-gradient-to-br from-[#fff5e6] via-[#ffecd6] to-[#ffd9b0]">
                 <div class="flex flex-col items-stretch gap-4 w-full h-full py-[72px] max-w-2xl mx-auto justify-center">
                     <div class="w-full flex flex-col p-6 bg-white rounded-2xl shadow-[0_8px_32px_rgba(146,76,0,0.12)] justify-center">
-                        <div class="w-12 h-12 bg-orange-50 rounded-xl flex items-center justify-center mb-4">
-                            <span class="material-symbols-outlined text-[#ff8800] text-3xl">sentiment_satisfied</span>
+                        <div class="w-12 h-12 bg-orange-50 rounded-xl flex items-center justify-center mb-4 gap-3">
+                            <span class="material-symbols-outlined text-[#ff8800] text-2xl">sentiment_satisfied</span>
                         </div>
-                        <p class="font-bold uppercase tracking-widest text-xs text-[#924c00] mb-2">Pertanyaan 7 dari 9</p>
-                        <h2 class="text-lg xl:text-xl font-semibold leading-snug text-[#191c1d]">Bagaimana pendapat Saudara tentang perilaku petugas dalam pelayanan terkait kesopanan dan keramahan?</h2>
+                        <p class="font-bold uppercase tracking-widest text-xs text-[#924c00] mb-2">Sikap dan Etika</p>
+                        <h2 class="text-lg xl:text-xl font-semibold leading-snug text-[#191c1d]">Menurut Anda, apakah tim pelaksana program bersikap sopan, ramah, dan menghargai masyarakat selama kegiatan berlangsung?</h2>
                     </div>
                     <div class="w-full flex flex-col gap-3">
                         <div>
@@ -1787,39 +1802,39 @@ if (empty($bagianList)) {
                 bg-gradient-to-br from-[#fff5e6] via-[#ffecd6] to-[#ffd9b0]">
                 <div class="flex flex-col items-stretch gap-4 w-full h-full py-[72px] max-w-2xl mx-auto justify-center">
                     <div class="w-full flex flex-col p-6 bg-white rounded-2xl shadow-[0_8px_32px_rgba(146,76,0,0.12)] justify-center">
-                        <div class="w-12 h-12 bg-orange-50 rounded-xl flex items-center justify-center mb-4">
-                            <span class="material-symbols-outlined text-[#ff8800] text-3xl">apartment</span>
+                        <div class="w-12 h-12 bg-orange-50 rounded-xl flex items-center justify-center mb-4 gap-3">
+                            <span class="material-symbols-outlined text-[#ff8800] text-2xl">trending_up</span>
                         </div>
-                        <p class="font-bold uppercase tracking-widest text-xs text-[#924c00] mb-2">Pertanyaan 8 dari 9</p>
-                        <h2 class="text-lg xl:text-xl font-semibold leading-snug text-[#191c1d]">Bagaimana pendapat Saudara tentang kualitas sarana dan prasarana?</h2>
+                        <p class="font-bold uppercase tracking-widest text-xs text-[#924c00] mb-2">Dampak Sosial dan Ekonomi</p>
+                        <h2 class="text-lg xl:text-xl font-semibold leading-snug text-[#191c1d]">Menurut Anda, apakah program PPM memberikan dampak positif terhadap kondisi sosial dan ekonomi masyarakat?</h2>
                     </div>
                     <div class="w-full flex flex-col gap-3">
                         <div>
                             <input type="radio" id="u8-1" name="u8" value="1" class="hidden scroll-btn peer">
                             <label for="u8-1"
                                 class="flex items-center px-5 py-4 rounded-xl border-2 border-orange-100 bg-white/80 text-[#3d2000] cursor-pointer hover:bg-white hover:border-orange-300 hover:shadow-md transition-all duration-200 peer-checked:bg-[#1c1917] peer-checked:text-white peer-checked:border-[#ff8800] peer-checked:shadow-lg">
-                                <span class="font-semibold text-base lg:text-lg">Buruk</span>
+                                <span class="font-semibold text-base lg:text-lg">Tidak Berdampak</span>
                             </label>
                         </div>
                         <div>
                             <input type="radio" id="u8-2" name="u8" value="2" class="hidden scroll-btn peer">
                             <label for="u8-2"
                                 class="flex items-center px-5 py-4 rounded-xl border-2 border-orange-100 bg-white/80 text-[#3d2000] cursor-pointer hover:bg-white hover:border-orange-300 hover:shadow-md transition-all duration-200 peer-checked:bg-[#1c1917] peer-checked:text-white peer-checked:border-[#ff8800] peer-checked:shadow-lg">
-                                <span class="font-semibold text-base lg:text-lg">Cukup</span>
+                                <span class="font-semibold text-base lg:text-lg">Kurang Berdampak</span>
                             </label>
                         </div>
                         <div>
                             <input type="radio" id="u8-3" name="u8" value="3" class="hidden scroll-btn peer">
                             <label for="u8-3"
                                 class="flex items-center px-5 py-4 rounded-xl border-2 border-orange-100 bg-white/80 text-[#3d2000] cursor-pointer hover:bg-white hover:border-orange-300 hover:shadow-md transition-all duration-200 peer-checked:bg-[#1c1917] peer-checked:text-white peer-checked:border-[#ff8800] peer-checked:shadow-lg">
-                                <span class="font-semibold text-base lg:text-lg">Baik</span>
+                                <span class="font-semibold text-base lg:text-lg">Berdampak</span>
                             </label>
                         </div>
                         <div>
                             <input type="radio" id="u8-4" name="u8" value="4" checked class="hidden scroll-btn peer">
                             <label for="u8-4"
                                 class="flex items-center px-5 py-4 rounded-xl border-2 border-orange-100 bg-white/80 text-[#3d2000] cursor-pointer hover:bg-white hover:border-orange-300 hover:shadow-md transition-all duration-200 peer-checked:bg-[#1c1917] peer-checked:text-white peer-checked:border-[#ff8800] peer-checked:shadow-lg">
-                                <span class="font-semibold text-base lg:text-lg">Sangat Baik</span>
+                                <span class="font-semibold text-base lg:text-lg">Sangat Berdampak</span>
                             </label>
                         </div>
                         <div class="step-actions flex justify-between mt-3">
@@ -1846,39 +1861,39 @@ if (empty($bagianList)) {
                 bg-gradient-to-br from-[#fff5e6] via-[#ffecd6] to-[#ffd9b0]">
                 <div class="flex flex-col items-stretch gap-4 w-full h-full py-[72px] max-w-2xl mx-auto justify-center">
                     <div class="w-full flex flex-col p-6 bg-white rounded-2xl shadow-[0_8px_32px_rgba(146,76,0,0.12)] justify-center">
-                        <div class="w-12 h-12 bg-orange-50 rounded-xl flex items-center justify-center mb-4">
-                            <span class="material-symbols-outlined text-[#ff8800] text-3xl">support_agent</span>
+                        <div class="w-12 h-12 bg-orange-50 rounded-xl flex items-center justify-center mb-4 gap-3">
+                            <span class="material-symbols-outlined text-[#ff8800] text-2xl">volunteer_activism</span>
                         </div>
-                        <p class="font-bold uppercase tracking-widest text-xs text-[#924c00] mb-2">Pertanyaan 9 dari 9</p>
-                        <h2 class="text-lg xl:text-xl font-semibold leading-snug text-[#191c1d]">Bagaimana pendapat Saudara tentang penanganan pengaduan pengguna layanan?</h2>
+                        <p class="font-bold uppercase tracking-widest text-xs text-[#924c00] mb-2">Kebermanfaatan</p>
+                        <h2 class="text-lg xl:text-xl font-semibold leading-snug text-[#191c1d]">Menurut Anda, apakah program PPM memberikan manfaat nyata bagi masyarakat penerima program?</h2>
                     </div>
                     <div class="w-full flex flex-col gap-3">
                         <div>
                             <input type="radio" id="u9-1" name="u9" value="1" class="hidden scroll-btn peer">
                             <label for="u9-1"
                                 class="flex items-center px-5 py-4 rounded-xl border-2 border-orange-100 bg-white/80 text-[#3d2000] cursor-pointer hover:bg-white hover:border-orange-300 hover:shadow-md transition-all duration-200 peer-checked:bg-[#1c1917] peer-checked:text-white peer-checked:border-[#ff8800] peer-checked:shadow-lg">
-                                <span class="font-semibold text-base lg:text-lg">Tidak Ada</span>
+                                <span class="font-semibold text-base lg:text-lg">Tidak Bermanfaat</span>
                             </label>
                         </div>
                         <div>
                             <input type="radio" id="u9-2" name="u9" value="2" class="hidden scroll-btn peer">
                             <label for="u9-2"
                                 class="flex items-center px-5 py-4 rounded-xl border-2 border-orange-100 bg-white/80 text-[#3d2000] cursor-pointer hover:bg-white hover:border-orange-300 hover:shadow-md transition-all duration-200 peer-checked:bg-[#1c1917] peer-checked:text-white peer-checked:border-[#ff8800] peer-checked:shadow-lg">
-                                <span class="font-semibold text-base lg:text-lg">Ada Tetapi Tidak Berfungsi</span>
+                                <span class="font-semibold text-base lg:text-lg">Kurang Bermanfaat</span>
                             </label>
                         </div>
                         <div>
                             <input type="radio" id="u9-3" name="u9" value="3" class="hidden scroll-btn peer">
                             <label for="u9-3"
                                 class="flex items-center px-5 py-4 rounded-xl border-2 border-orange-100 bg-white/80 text-[#3d2000] cursor-pointer hover:bg-white hover:border-orange-300 hover:shadow-md transition-all duration-200 peer-checked:bg-[#1c1917] peer-checked:text-white peer-checked:border-[#ff8800] peer-checked:shadow-lg">
-                                <span class="font-semibold text-base lg:text-lg">Berfungsi Kurang Maksimal</span>
+                                <span class="font-semibold text-base lg:text-lg">Bermanfaat</span>
                             </label>
                         </div>
                         <div>
                             <input type="radio" id="u9-4" name="u9" value="4" checked class="hidden scroll-btn peer">
                             <label for="u9-4"
                                 class="flex items-center px-5 py-4 rounded-xl border-2 border-orange-100 bg-white/80 text-[#3d2000] cursor-pointer hover:bg-white hover:border-orange-300 hover:shadow-md transition-all duration-200 peer-checked:bg-[#1c1917] peer-checked:text-white peer-checked:border-[#ff8800] peer-checked:shadow-lg">
-                                <span class="font-semibold text-base lg:text-lg">Dikelola Dengan Baik</span>
+                                <span class="font-semibold text-base lg:text-lg">Sangat Bermanfaat</span>
                             </label>
                         </div>
                         <div class="step-actions flex justify-between mt-3">
@@ -1935,200 +1950,212 @@ if (empty($bagianList)) {
         </div>
     </div>
 <script>
-    let hasSubJenis = false;
+    const PPM = @json($catalog);
+    const TIDAK_TAHU = @json($tidakTahu);
+    const RESPONDEN = @json($responden ? ['desa_id' => (int) $responden['desa_id'], 'dinilai' => $responden['dinilai'] ?? []] : null);
+    const IS_LANJUTAN = RESPONDEN !== null;
+    const HAS_ERRORS = @json($errors->any());
+
+    const RADIO_CARD = 'inline-flex items-center justify-between w-full p-3 text-gray-900 bg-white border-2 border-white rounded-lg cursor-pointer peer-checked:bg-gray-800 h-full peer-checked:text-white hover:text-gray-900 hover:bg-gray-400';
 
     function escapeHtml(s){
-        return String(s ?? '').replace(/[&<>"']/g, m => ({
-            '&':'&amp;',
-            '<':'&lt;',
-            '>':'&gt;',
-            '"':'&quot;',
-            "'":'&#39;'
-        }[m]));
+        return String(s ?? '').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
     }
 
-    function renderJenisButtons(groups){
-        const el = document.getElementById('jenisContainer');
-        // Data bisa berupa array of group (lama) atau array of program (baru)
-        let data = Array.isArray(groups) ? groups : [];
-        // Jika data[0] punya 'items', berarti format lama (group by bidang), ambil semua items
-        if (data.length && data[0].items) {
-            data = data.flatMap(g => g.items || []);
-        }
-        hasSubJenis = data.length > 0;
+    function checkedValue(name){
+        const el = document.querySelector(`input[name="${name}"]:checked`);
+        return el ? el.value : null;
+    }
 
-        if(!hasSubJenis){
-            el.innerHTML = `
-                <div class="px-3 py-2 text-sm text-gray-600 bg-white rounded-2xl border border-orange-200 font-semibold">
-                    Bagian ini belum memiliki data program. Anda akan langsung diarahkan ke pengisian biodata.
-                </div>
-            `;
-            setTimeout(function() {
-                window.location = '#identitas';
-            }, 600);
-            return;
-        }
+    function selectedDesa(){ return checkedValue('desa_id'); }
 
-        let index = 0;
-        const html = data.map((it) => {
-            const inputId = `jenis${it.id}`;
-            const checked = index === 0 ? 'checked' : '';
-            index++;
-            return `
-                <li>
-                    <input type="radio"
-                        id="${inputId}"
-                        name="jenis"
-                        value="${it.id}"
-                        class="hidden peer radio-jenis"
-                        ${checked}>
-                    <label for="${inputId}"
-                        class="inline-flex items-left justify-between w-full p-3 text-gray-900 bg-white border-2 border-white rounded-2xl cursor-pointer peer-checked:bg-gray-800 h-full peer-checked:text-white hover:text-gray-900 hover:bg-gray-400">
-                        <div class="block flex w-full items-left">
-                            <div class="w-full lg:text-lg lg:text-2xl text-left lg:text-left text-4xl font-semibold">
-                                ${escapeHtml(it.jenis || '-')}
-                            </div>
-                        </div>
-                    </label>
-                </li>
-            `;
+    function sudahDinilai(rincianId){
+        return IS_LANJUTAN && RESPONDEN.dinilai.includes(rincianId);
+    }
+
+    /** Rincian yang punya pelaksana di desa ini, dikelompokkan per program. */
+    function rincianPerProgram(desaId){
+        const out = {};
+        Object.entries(PPM.rincian).forEach(([id, r]) => {
+            if ((r.pelaksana[desaId] || []).length) {
+                (out[r.program] = out[r.program] || []).push(id);
+            }
+        });
+        return out;
+    }
+
+    function radioItem(name, value, label, opts = {}){
+        const id = `${name}-${String(value).replace(/[^a-zA-Z0-9_-]/g, '_')}`;
+        return `
+            <li>
+                <input type="radio" id="${id}" name="${name}" value="${escapeHtml(value)}" class="hidden peer" ${opts.disabled ? 'disabled' : ''}>
+                <label for="${id}" class="${RADIO_CARD} ${opts.disabled ? 'ppm-done' : ''}">
+                    <div class="w-full lg:text-lg text-xl text-left font-semibold">${escapeHtml(label)}${opts.tag ? `<span class="ppm-tag">${escapeHtml(opts.tag)}</span>` : ''}</div>
+                </label>
+            </li>`;
+    }
+
+    function renderProgram(){
+        const desaId = selectedDesa();
+        const el = document.getElementById('programList');
+        const perProgram = rincianPerProgram(desaId);
+        document.querySelectorAll('.js-desa-nama').forEach(n => n.textContent = PPM.desa[desaId] || '-');
+        document.getElementById('desaTampil').value = PPM.desa[desaId] || '';
+
+        let html = '';
+        let lastPilar = null;
+        Object.entries(PPM.program).forEach(([programId, p]) => {
+            const rincianIds = perProgram[programId];
+            if (!rincianIds) return;
+            if (p.pilar !== lastPilar) {
+                if (lastPilar !== null) html += '</ul>';
+                html += `<p class="ppm-pilar-title">${escapeHtml(PPM.pilar[p.pilar] || p.pilar)}</p><ul class="grid w-full gap-2 lg:grid-cols-2 grid-cols-1">`;
+                lastPilar = p.pilar;
+            }
+            const semuaSudah = rincianIds.every(sudahDinilai);
+            html += radioItem('program_id', programId, p.nama, { disabled: semuaSudah, tag: semuaSudah ? 'Sudah dinilai' : '' });
+        });
+        if (lastPilar !== null) html += '</ul>';
+
+        el.innerHTML = html || '<div class="ppm-banner">Belum ada program yang berjalan di desa ini.</div>';
+    }
+
+    function renderRincian(){
+        const desaId = selectedDesa();
+        const programId = checkedValue('program_id');
+        const ids = rincianPerProgram(desaId)[programId] || [];
+        document.getElementById('programNama').textContent = PPM.program[programId]?.nama || '-';
+
+        const items = ids.map(id => {
+            const done = sudahDinilai(id);
+            return radioItem('rincian_id', id, PPM.rincian[id].nama, { disabled: done, tag: done ? 'Sudah dinilai' : '' });
         }).join('');
-        el.innerHTML = `<ul class="grid w-full gap-2 lg:grid-cols-2 grid-cols-1">${html}</ul>`;
+        document.getElementById('rincianList').innerHTML = `<ul class="grid w-full gap-2 grid-cols-1">${items}</ul>`;
+
+        // Hanya satu rincian yang bisa dipilih: pilih otomatis
+        const enabled = document.querySelectorAll('#rincianList input:not([disabled])');
+        if (enabled.length === 1) enabled[0].checked = true;
     }
 
-    function loadJenisFlat(bagianId){
-        const el = document.getElementById('jenisContainer');
-        el.innerHTML = '<div class="px-3 py-2 text-sm text-gray-500">Memuat data…</div>';
+    function renderPerusahaan(){
+        const desaId = selectedDesa();
+        const rincianId = checkedValue('rincian_id');
+        const kodes = PPM.rincian[rincianId]?.pelaksana[desaId] || [];
+        document.getElementById('rincianNama').textContent = PPM.rincian[rincianId]?.nama || '-';
 
-        // Debug: tampilkan bagianId yang dikirim
-        console.log('[DEBUG] Memuat sub_jenis untuk bagianId:', bagianId);
-
-        fetch(`/sub-jenis/list?bagian=${encodeURIComponent(bagianId)}`)
-            .then(async r => {
-                let json;
-                try {
-                    json = await r.json();
-                } catch (e) {
-                    throw new Error('Respon bukan JSON');
-                }
-                // Debug: tampilkan hasil fetch ke console
-                console.log('[DEBUG] Hasil fetch /sub-jenis/list:', json);
-                if(!json.ok) {
-                    // Tampilkan pesan error dari backend
-                    throw new Error(json.message || 'Gagal memuat data');
-                }
-                if(!json.data || !Array.isArray(json.data) || json.data.length === 0) {
-                    el.innerHTML = `<div class='px-3 py-2 text-sm text-red-600 bg-white rounded-2xl border border-orange-200 font-semibold'>Tidak ada data program untuk bagian ini.<br>Silakan cek data di admin atau hubungi admin.</div>`;
-                    hasSubJenis = false;
-                    return;
-                }
-                renderJenisButtons(json.data || []);
-            })
-            .catch((err) => {
-                hasSubJenis = false;
-                el.innerHTML = `<div class="px-3 py-2 text-sm text-red-600">Gagal memuat data: ${err.message || err}</div>`;
-                // Debug: tampilkan error detail
-                console.error('[DEBUG] Gagal load sub_jenis:', err);
-            });
+        const items = kodes.map(k => radioItem('perusahaan_jawaban', k, PPM.perusahaan[k] || k)).join('')
+            + radioItem('perusahaan_jawaban', TIDAK_TAHU, 'Tidak tahu');
+        document.getElementById('perusahaanList').innerHTML = `<ul class="grid w-full gap-2 lg:grid-cols-2 grid-cols-1">${items}</ul>`;
     }
 
-    function lanjutKeBiodata(){
-        // Jika tidak ada jenis layanan, langsung lanjut
-        if (!hasSubJenis) {
-            window.location = '#identitas';
-            return;
-        }
-        // Jika ada jenis layanan, wajib pilih salah satu
-        const selectedJenis = document.querySelector('.radio-jenis:checked');
-        if (!selectedJenis) {
-            alert('Silakan pilih pelayanan atau sub pelayanan terlebih dahulu.');
-            return;
-        }
-        window.location = '#identitas';
+    function lanjutDariDesa(){
+        if (!selectedDesa()) { alert('Silakan pilih desa terlebih dahulu.'); return; }
+        renderProgram();
+        window.location.hash = '#program';
     }
 
-    function lanjutDariIdentitas(){
-        // const nama = document.getElementById('nama');
-        // const nohp = document.getElementById('nohp');
-        // const alamat = document.getElementById('alamat');
-        // const jenkel = document.querySelector('#identitas input[name="jenkel[jenkel]']:checked');
-
-        // const requiredFields = [
-        //     { element: nama, label: 'Nama' },
-        //     { element: nohp, label: 'No. Telp' },
-        //     { element: alamat, label: 'Alamat' },
-        // ];
-
-        // for (const field of requiredFields) {
-        //     if (!field.element || !field.element.value.trim()) {
-        //         alert(`Silakan isi ${field.label} terlebih dahulu.`);
-        //         field.element?.focus();
-        //         return;
-        //     }
-        // }
-
-        // if (!jenkel) {
-        //     alert('Silakan pilih jenis kelamin terlebih dahulu.');
-        //     return;
-        // }
-
-        window.location.hash = '#kedua';
-    }
-
-    function resetSurveyForm(){
-        const form = document.querySelector('.survey-track');
-        if (!form) {
-            return;
-        }
-
-        form.reset();
-
-        const firstBagian = document.querySelector('.radio-bagian');
-        if (firstBagian) {
-            firstBagian.checked = true;
-            loadJenisFlat(firstBagian.value);
-        }
-
-        hasSubJenis = false;
+    function kembaliDariProgram(){
         window.location.hash = '#awal';
     }
 
+    function lanjutDariProgram(){
+        if (!checkedValue('program_id')) { alert('Silakan pilih program terlebih dahulu.'); return; }
+        renderRincian();
+        window.location.hash = '#rincian';
+    }
+
+    function lanjutDariRincian(){
+        if (!checkedValue('rincian_id')) { alert('Silakan pilih rincian program terlebih dahulu.'); return; }
+        renderPerusahaan();
+        window.location.hash = '#perusahaan';
+    }
+
+    function lanjutDariPerusahaan(){
+        if (!checkedValue('perusahaan_jawaban')) { alert('Silakan pilih perusahaan, atau "Tidak tahu".'); return; }
+        window.location.hash = IS_LANJUTAN ? '#satu' : '#identitas';
+    }
+
+    function lanjutDariIdentitas(){
+        const nama = document.getElementById('nama');
+        if (!nama.value.trim()) { alert('Silakan isi Nama terlebih dahulu.'); nama.focus(); return; }
+        if (!checkedValue('jenkel')) { alert('Silakan pilih jenis kelamin.'); return; }
+        if (!checkedValue('jenis_responden')) { alert('Silakan pilih jenis responden.'); return; }
+        window.location.hash = '#kedua';
+    }
+
+    /** Tombol "Kembali" di pertanyaan pertama: responden lanjutan tidak melewati identitas. */
+    function kembaliDariSatu(){
+        window.location.hash = IS_LANJUTAN ? '#perusahaan' : '#kedua';
+    }
+
+    // Ganti desa/program/rincian -> pilihan di langkah berikutnya tidak berlaku lagi
     document.addEventListener('change', function (e) {
-        const el = e.target;
-        if (el.classList && el.classList.contains('radio-bagian')) {
-            loadJenisFlat(el.value);
+        if (e.target.name === 'desa_id') {
+            document.getElementById('programList').innerHTML = '';
+            document.getElementById('rincianList').innerHTML = '';
+            document.getElementById('perusahaanList').innerHTML = '';
+        } else if (e.target.name === 'program_id') {
+            document.getElementById('rincianList').innerHTML = '';
+            document.getElementById('perusahaanList').innerHTML = '';
+        } else if (e.target.name === 'rincian_id') {
+            document.getElementById('perusahaanList').innerHTML = '';
         }
+    });
+
+    document.getElementById('surveyForm').addEventListener('submit', function (e) {
+        const missing = [
+            ['desa_id', 'desa', '#awal'],
+            ['rincian_id', 'rincian program', '#program'],
+            ['perusahaan_jawaban', 'perusahaan', '#perusahaan'],
+        ].find(([name]) => !checkedValue(name));
+        if (missing) {
+            e.preventDefault();
+            alert(`Silakan pilih ${missing[1]} terlebih dahulu.`);
+            window.location.hash = missing[2];
+            return;
+        }
+        if (!IS_LANJUTAN && !document.getElementById('nama').value.trim()) {
+            e.preventDefault();
+            alert('Silakan isi Nama terlebih dahulu.');
+            window.location.hash = '#identitas';
+            return;
+        }
+        const btn = this.querySelector('button[type="submit"]');
+        if (btn) { btn.disabled = true; btn.textContent = 'MENYIMPAN...'; }
     });
 
     document.addEventListener('DOMContentLoaded', function () {
         document.body.classList.add('is-ready');
 
-        // Tampilkan popup ucapan otomatis di awal
-        var popup = document.getElementById('popup');
-        if (popup) popup.classList.remove('hidden');
-
-        // Langsung skip ke step biodata (identitas) jika belum di hash
-        if (!window.location.hash || window.location.hash === '#awal' || window.location.hash === '#jenisProgram') {
-            window.location.hash = '#awal';
-        }
-
-        // Update progress bar dan label step sesuai hash saat halaman dimuat
         const sections = [
-            { id: 'awal', label: 'Pilih bagian layanan' },
-            { id: 'jenisProgram', label: 'Pilih jenis layanan' },
-            { id: 'identitas', label: 'Lengkapi data identitas' },
-            { id: 'kedua', label: 'Lengkapi biodata lainnya' },
-            { id: 'satu', label: 'Kesesuaian persyaratan layanan' },
-            { id: 'dua', label: 'Kemudahan prosedur pelayanan' },
-            { id: 'tiga', label: 'Kecepatan waktu pelayanan' },
-            { id: 'empat', label: 'Kewajaran biaya atau tarif' },
-            { id: 'lima', label: 'Kesesuaian produk pelayanan' },
-            { id: 'enam', label: 'Kompetensi petugas pelayanan' },
-            { id: 'tujuh', label: 'Kesopanan dan keramahan petugas' },
-            { id: 'delapan', label: 'Kualitas sarana dan prasarana' },
-            { id: 'sembilan', label: 'Penanganan pengaduan layanan' },
+            { id: 'awal', label: 'Pilih desa' },
+            { id: 'program', label: 'Pilih program' },
+            { id: 'rincian', label: 'Pilih rincian program' },
+            { id: 'perusahaan', label: 'Perusahaan pelaksana' },
+            ...(IS_LANJUTAN ? [] : [
+                { id: 'identitas', label: 'Lengkapi data identitas' },
+                { id: 'kedua', label: 'Lengkapi biodata lainnya' },
+            ]),
+            { id: 'satu', label: 'Kesesuaian program' },
+            { id: 'dua', label: 'Kualitas pelaksanaan' },
+            { id: 'tiga', label: 'Keberlanjutan' },
+            { id: 'empat', label: 'Kejelasan informasi' },
+            { id: 'lima', label: 'Kompetensi tim' },
+            { id: 'enam', label: 'Kemudahan akses' },
+            { id: 'tujuh', label: 'Sikap dan etika' },
+            { id: 'delapan', label: 'Dampak sosial dan ekonomi' },
+            { id: 'sembilan', label: 'Kebermanfaatan' },
             { id: 'saran', label: 'Saran dan Harapan' }
         ];
+
+        // Pilihan dibuat di halaman ini, jadi setelah reload selalu mulai dari awal
+        // (responden lanjutan langsung ke pilihan program di desanya).
+        if (IS_LANJUTAN && !HAS_ERRORS) {
+            renderProgram();
+            window.location.hash = '#program';
+        } else {
+            window.location.hash = '#awal';
+        }
 
         const stepLabel = document.getElementById('surveyStepLabel');
         const stepCount = document.getElementById('surveyStepCount');
@@ -2139,7 +2166,7 @@ if (empty($bagianList)) {
         }
 
         function updateStepFromHash() {
-            const hash = window.location.hash ? window.location.hash.replace('#', '') : 'identitas';
+            const hash = window.location.hash ? window.location.hash.replace('#', '') : 'awal';
             const activeIndex = Math.max(0, sections.findIndex((section) => section.id === hash));
             const activeSection = sections[activeIndex] || sections[0];
             if (stepLabel) stepLabel.textContent = activeSection.label;
@@ -2149,7 +2176,6 @@ if (empty($bagianList)) {
             });
         }
 
-        // Jalankan update saat halaman dimuat dan saat hash berubah
         updateStepFromHash();
         window.addEventListener('hashchange', updateStepFromHash);
     });

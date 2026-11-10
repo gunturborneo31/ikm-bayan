@@ -2,97 +2,52 @@
 
 error_reporting(0);
 
-$startDate = '2024-01-01';
+$startDate = \App\Support\SurveyFilter::year() . '-01-01';
 
-$endDate = '2024-10-03';
+$endDate = \App\Support\SurveyFilter::year() . '-12-31';
 
-if ($_GET['tw'] == null) {
-    $today = date('Y-m-d', strtotime('+1 days'));
-    $endDate = $today;
-} elseif ($_GET['tw'] == 1) {
-    $startDate = $_GET['Tahun'] . '-01-01';
-    $endDate = $_GET['Tahun'] . '-03-31';
-} elseif ($_GET['tw'] == 2) {
-    $startDate = $_GET['Tahun'] . '-04-01';
-    $endDate = $_GET['Tahun'] . '-06-31';
-} elseif ($_GET['tw'] == 3) {
-    $startDate = $_GET['Tahun'] . '-01-01';
-    $endDate = $_GET['Tahun'] . '-06-31';
-} elseif ($_GET['tw'] == 4) {
-    $startDate = $_GET['Tahun'] . '-07-01';
-    $endDate = $_GET['Tahun'] . '-09-31';
-} elseif ($_GET['tw'] == 5) {
-    $startDate = $_GET['Tahun'] . '-01-01';
-    $endDate = $_GET['Tahun'] . '-09-31';
-} elseif ($_GET['tw'] == 6) {
-    $startDate = $_GET['Tahun'] . '-10-01';
-    $endDate = $_GET['Tahun'] . '-12-31';
-} elseif ($_GET['tw'] == 7) {
-    $startDate = $_GET['Tahun'] . '-01-01';
-    $endDate = $_GET['Tahun'] . '-12-31';
-}
 
-$terms = array_values(array_unique(array_filter(array_map('trim', explode(',', $_GET['bagian'])))));
+$terms = \App\Support\SurveyFilter::selectedPilar();
 
-$tu1 = DB::table('survey_responses')->where('tahun', $_GET['Tahun'] ?? date('Y'))
-    ->whereBetween('created_at', [$startDate, $endDate])
-    ->whereIn('jenisPelayanan', $terms)
+$tu1 = \App\Support\SurveyFilter::query()
     ->get()
     ->sum('u1');
 
-$tu2 = DB::table('survey_responses')->where('tahun', $_GET['Tahun'] ?? date('Y'))
-    ->whereBetween('created_at', [$startDate, $endDate])
-    ->whereIn('jenisPelayanan', $terms)
+$tu2 = \App\Support\SurveyFilter::query()
     ->get()
     ->sum('u2');
 
-$tu3 = DB::table('survey_responses')->where('tahun', $_GET['Tahun'] ?? date('Y'))
-    ->whereBetween('created_at', [$startDate, $endDate])
-    ->whereIn('jenisPelayanan', $terms)
+$tu3 = \App\Support\SurveyFilter::query()
     ->get()
     ->sum('u3');
 
-$tu4 = DB::table('survey_responses')->where('tahun', $_GET['Tahun'] ?? date('Y'))
-    ->whereBetween('created_at', [$startDate, $endDate])
-    ->whereIn('jenisPelayanan', $terms)
+$tu4 = \App\Support\SurveyFilter::query()
     ->get()
     ->sum('u4');
 
-$tu5 = DB::table('survey_responses')->where('tahun', $_GET['Tahun'] ?? date('Y'))
-    ->whereBetween('created_at', [$startDate, $endDate])
-    ->whereIn('jenisPelayanan', $terms)
+$tu5 = \App\Support\SurveyFilter::query()
     ->get()
     ->sum('u5');
 
-$tu6 = DB::table('survey_responses')->where('tahun', $_GET['Tahun'] ?? date('Y'))
-    ->whereBetween('created_at', [$startDate, $endDate])
-    ->whereIn('jenisPelayanan', $terms)
+$tu6 = \App\Support\SurveyFilter::query()
     ->get()
     ->sum('u6');
 
-$tu7 = DB::table('survey_responses')->where('tahun', $_GET['Tahun'] ?? date('Y'))
-    ->whereBetween('created_at', [$startDate, $endDate])
-    ->whereIn('jenisPelayanan', $terms)
+$tu7 = \App\Support\SurveyFilter::query()
     ->get()
     ->sum('u7');
 
-$tu8 = DB::table('survey_responses')->where('tahun', $_GET['Tahun'] ?? date('Y'))
-    ->whereBetween('created_at', [$startDate, $endDate])
-    ->whereIn('jenisPelayanan', $terms)
+$tu8 = \App\Support\SurveyFilter::query()
     ->get()
     ->sum('u8');
 
-$tu9 = DB::table('survey_responses')->where('tahun', $_GET['Tahun'] ?? date('Y'))
-    ->whereBetween('created_at', [$startDate, $endDate])
-    ->whereIn('jenisPelayanan', $terms)
+$tu9 = \App\Support\SurveyFilter::query()
     ->get()
     ->sum('u9');
 
 $Ttl_Nilai_Unsur = $tu1 + $tu2 + $tu3 + $tu4 + $tu5 + $tu6 + $tu7 + $tu8 + $tu9;
 
-$n = DB::table('survey_responses')->where('tahun', $_GET['Tahun'] ?? date('Y'))
-    ->whereBetween('created_at', [$startDate, $endDate])
-    ->whereIn('jenisPelayanan', $terms)
+$n = \App\Support\SurveyFilter::query()
     ->get()
     ->count();
 
@@ -138,15 +93,15 @@ if ($n == 0) {
     $nrr = $nrr1 + $nrr2 + $nrr3 + $nrr4 + $nrr5 + $nrr6 + $nrr7 + $nrr8 + $nrr9;
     $nrr = sprintf('%0.2f', $nrr);
 
-    $nrrt1 = sprintf('%0.2f', $nrr1 * 0.111);
-    $nrrt2 = sprintf('%0.2f', $nrr2 * 0.111);
-    $nrrt3 = sprintf('%0.2f', $nrr3 * 0.111);
-    $nrrt4 = sprintf('%0.2f', $nrr4 * 0.111);
-    $nrrt5 = sprintf('%0.2f', $nrr5 * 0.111);
-    $nrrt6 = sprintf('%0.2f', $nrr6 * 0.111);
-    $nrrt7 = sprintf('%0.2f', $nrr7 * 0.111);
-    $nrrt8 = sprintf('%0.2f', $nrr8 * 0.111);
-    $nrrt9 = sprintf('%0.2f', $nrr9 * 0.111);
+    $nrrt1 = sprintf('%0.2f', $nrr1 * (1/9));
+    $nrrt2 = sprintf('%0.2f', $nrr2 * (1/9));
+    $nrrt3 = sprintf('%0.2f', $nrr3 * (1/9));
+    $nrrt4 = sprintf('%0.2f', $nrr4 * (1/9));
+    $nrrt5 = sprintf('%0.2f', $nrr5 * (1/9));
+    $nrrt6 = sprintf('%0.2f', $nrr6 * (1/9));
+    $nrrt7 = sprintf('%0.2f', $nrr7 * (1/9));
+    $nrrt8 = sprintf('%0.2f', $nrr8 * (1/9));
+    $nrrt9 = sprintf('%0.2f', $nrr9 * (1/9));
 
     $nrrT = $nrrt1 + $nrrt2 + $nrrt3 + $nrrt4 + $nrrt5 + $nrrt6 + $nrrt7 + $nrrt8 + $nrrt9;
     $nrrT = sprintf('%0.2f', $nrrT);
@@ -201,7 +156,6 @@ if ($n == 0) {
     <div id="dropdown" class="z-10 hidden border bg-white divide-y divide-gray-100 rounded-lg shadow w-44">
       <ul class="py-2 text-sm text-gray-700" aria-labelledby="dropdownDefaultButton">
         @php
-          $tw = $_GET['tw'] ?? '';
           $Tahun = $_GET['Tahun'] ?? '';
           $bagian = $_GET['bagian'] ?? '';
           $jenkel = $_GET['jenkel'] ?? '0';
@@ -211,7 +165,7 @@ if ($n == 0) {
         @endphp
   
         <li>
-          <a href="/rekapTotal?tw={{ $tw }}&Tahun={{ $Tahun }}&bagian={{ urlencode($bagian) }}&jenkel={{ $jenkel=='0'?'1':'0' }}&usia={{ $usia }}&pekerjaan={{ $pekerjaan }}&pendidikan={{ $pendidikan }}"
+          <a href="/rekapTotal?Tahun={{ $Tahun }}&bagian={{ urlencode($bagian) }}&jenkel={{ $jenkel=='0'?'1':'0' }}&usia={{ $usia }}&pekerjaan={{ $pekerjaan }}&pendidikan={{ $pendidikan }}"
              class="block px-4 py-2 hover:bg-gray-100 flex items-center gap-2">
             <p>Jenis kelamin</p>
             <svg aria-hidden="true" fill="none" stroke-width="4" stroke="currentColor" viewBox="0 0 24 24" class="w-3 h-3 {{ $jenkel=='1' ? '' : 'hidden' }}">
@@ -221,7 +175,7 @@ if ($n == 0) {
         </li>
   
         <li>
-          <a href="/rekapTotal?tw={{ $tw }}&Tahun={{ $Tahun }}&bagian={{ urlencode($bagian) }}&jenkel={{ $jenkel }}&usia={{ $usia=='0'?'1':'0' }}&pekerjaan={{ $pekerjaan }}&pendidikan={{ $pendidikan }}"
+          <a href="/rekapTotal?Tahun={{ $Tahun }}&bagian={{ urlencode($bagian) }}&jenkel={{ $jenkel }}&usia={{ $usia=='0'?'1':'0' }}&pekerjaan={{ $pekerjaan }}&pendidikan={{ $pendidikan }}"
              class="block px-4 py-2 hover:bg-gray-100 flex items-center gap-2">
             <p>Usia</p>
             <svg aria-hidden="true" fill="none" stroke-width="4" stroke="currentColor" viewBox="0 0 24 24" class="w-3 h-3 {{ $usia=='1' ? '' : 'hidden' }}">
@@ -231,7 +185,7 @@ if ($n == 0) {
         </li>
   
         <li>
-          <a href="/rekapTotal?tw={{ $tw }}&Tahun={{ $Tahun }}&bagian={{ urlencode($bagian) }}&jenkel={{ $jenkel }}&usia={{ $usia }}&pekerjaan={{ $pekerjaan=='0'?'1':'0' }}&pendidikan={{ $pendidikan }}"
+          <a href="/rekapTotal?Tahun={{ $Tahun }}&bagian={{ urlencode($bagian) }}&jenkel={{ $jenkel }}&usia={{ $usia }}&pekerjaan={{ $pekerjaan=='0'?'1':'0' }}&pendidikan={{ $pendidikan }}"
              class="block px-4 py-2 hover:bg-gray-100 flex items-center gap-2">
             <p>Pekerjaan</p>
             <svg aria-hidden="true" fill="none" stroke-width="4" stroke="currentColor" viewBox="0 0 24 24" class="w-3 h-3 {{ $pekerjaan=='1' ? '' : 'hidden' }}">
@@ -241,7 +195,7 @@ if ($n == 0) {
         </li>
   
         <li>
-          <a href="/rekapTotal?tw={{ $tw }}&Tahun={{ $Tahun }}&bagian={{ urlencode($bagian) }}&jenkel={{ $jenkel }}&usia={{ $usia }}&pekerjaan={{ $pekerjaan }}&pendidikan={{ $pendidikan=='0'?'1':'0' }}"
+          <a href="/rekapTotal?Tahun={{ $Tahun }}&bagian={{ urlencode($bagian) }}&jenkel={{ $jenkel }}&usia={{ $usia }}&pekerjaan={{ $pekerjaan }}&pendidikan={{ $pendidikan=='0'?'1':'0' }}"
              class="block px-4 py-2 hover:bg-gray-100 flex items-center gap-2">
             <p>Pendidikan</p>
             <svg aria-hidden="true" fill="none" stroke-width="4" stroke="currentColor" viewBox="0 0 24 24" class="w-3 h-3 {{ $pendidikan=='1' ? '' : 'hidden' }}">
@@ -253,122 +207,10 @@ if ($n == 0) {
     </div>
   </div>
 
-  {{-- tahun --}}
-@php
-$tw = $_GET['tw'] ?? '';
-$Tahun = $_GET['Tahun'] ?? '';
-$bagian = $_GET['bagian'] ?? '';
-$jenkel = $_GET['jenkel'] ?? '0';
-$usia = $_GET['usia'] ?? '0';
-$pekerjaan = $_GET['pekerjaan'] ?? '0';
-$pendidikan = $_GET['pendidikan'] ?? '0';
-@endphp
+  @include('partials.admin-filter', ['route' => '/rekapTotal'])
 
-<div class="flex flex-row items-center gap-3 mb-5 lg:mb-0">
-<label for="tahun" class="font-bold text-gray-800 text-5xl lg:text-base">Tahun</label>
-<select id="tahun"
-  onChange="document.location.href='/rekapTotal?tw={{ $tw }}&Tahun=' + this.value + '&bagian={{ urlencode($bagian) }}&jenkel={{ $jenkel }}&usia={{ $usia }}&pekerjaan={{ $pekerjaan }}&pendidikan={{ $pendidikan }}'"
-  class="bg-white border border-gray-300 text-gray-800 font-bold text-5xl w-[250px] text-center lg:w-fit lg:text-sm rounded-full px-3 py-1">
-  <option value="2023" {{ $Tahun=='2023' ? 'selected' : '' }}>2023</option>
-  <option value="2024" {{ $Tahun=='2024' ? 'selected' : '' }}>2024</option>
-  <option value="2025" {{ $Tahun=='2025' ? 'selected' : '' }}>2025</option>
-  <option value="2026" {{ ($Tahun=='2026' || $Tahun=='') ? 'selected' : '' }}>2026</option>
-</select>
-</div>
-
-{{-- tw --}}
-@php
-  $tw = $_GET['tw'] ?? '';
-  $Tahun = $_GET['Tahun'] ?? '';
-  $bagian = $_GET['bagian'] ?? '';
-  $jenkel = $_GET['jenkel'] ?? '0';
-  $usia = $_GET['usia'] ?? '0';
-  $pekerjaan = $_GET['pekerjaan'] ?? '0';
-  $pendidikan = $_GET['pendidikan'] ?? '0';
-@endphp
-
-<div class="flex flex-row items-center gap-3 mb-5 lg:mb-0">
-  <label for="tw" class="font-bold text-gray-800 text-5xl lg:text-base">Triwulan</label>
-  <select id="tw"
-    onChange="document.location.href='/rekapTotal?tw=' + this.value + '&Tahun={{ $Tahun }}&bagian={{ urlencode($bagian) }}&jenkel={{ $jenkel }}&usia={{ $usia }}&pekerjaan={{ $pekerjaan }}&pendidikan={{ $pendidikan }}'"
-    class="bg-white border border-gray-300 text-gray-800 font-bold text-5xl w-[300px] text-center lg:w-fit lg:text-sm rounded-full px-3 py-1">
-    <option value="1" {{ $tw=='1' ? 'selected' : '' }}>Triwulan 1 (Jan, Feb, Mar)</option>
-    <option value="2" {{ $tw=='2' ? 'selected' : '' }}>Triwulan 2 (Apr, Mei, Jun)</option>
-    <option value="3" {{ $tw=='3' ? 'selected' : '' }}>Triwulan 2 (Jan s/d Jun)</option>
-    <option value="4" {{ $tw=='4' ? 'selected' : '' }}>Triwulan 3 (Jul, Agu, Sep)</option>
-    <option value="5" {{ $tw=='5' ? 'selected' : '' }}>Triwulan 3 (Jan s/d Sep)</option>
-    <option value="6" {{ $tw=='6' ? 'selected' : '' }}>Triwulan 4 (Okt, Nop, Des)</option>
-    <option value="7" {{ $tw=='7' ? 'selected' : '' }}>Triwulan 4 (Jan s/d Des)</option>
-  </select>
-</div>
-
- {{-- bagian --}}
- <div class="flex flex-row items-center gap-2">
-    <label for="countries" class="text-black font-bold text-sm ">
-        Bagian</label>
-
-    <button id="dropdownDefaultButton" data-dropdown-toggle="dropdownP"
-        class="flex items-center  bg-[#ffffff] border border-gray-400 font-bold   text-sm rounded-full px-3 py-1"
-        type="button">Pilih <svg class="w-2.5 h-2.5 ms-3" aria-hidden="true"
-            xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6">
-            <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"
-                stroke-width="2" d="m1 1 4 4 4-4" />
-        </svg>
-    </button>
-
-    <!-- Dropdown menu -->
-    <div id="dropdownP"
-        class="z-10 hidden border bg-[#ffffff] divide-y divide-gray-100 rounded-lg shadow w-[250px] dark:bg-gray-700">
-        <ul class="py-2 px-4 text-sm text-gray-700 dark:text-gray-200"
-            aria-labelledby="dropdownDefaultButton">
-            @foreach($allOptions as $key => $label)
-                @if(in_array($key, $visibleKeys))
-                <li class="flex items-center gap-4 py-1">
-                    <input id="{{ $key }}" type="checkbox" value="{{ $key }}"
-                        {{ str_contains($bagianQuery, $key) ? 'checked' : '' }}
-                        class="w-4 h-4 text-orange-600 border-orange-300 rounded focus:ring-orange-500">
-                    <label for="{{ $key }}" class="text-sm text-gray-700 dark:text-gray-200">
-                    {{ $label }}
-                    </label>
-                </li>
-                @endif
-            @endforeach
-            
-            <!-- Tombol Tampilkan -->
-            <div class="mt-4 py-1">
-                <button onclick="submitCheckboxes()" 
-                        class="w-full px-4 py-2 text-gray-900 rounded-lg bg-gradient-to-br from-[#EA580C] from-60% font-bold to-[#FDBA74] to-95%">
-                Tampilkan
-                </button>
-            </div>
-            
-            <script>
-            function submitCheckboxes() {
-                const checked = Array.from(document.querySelectorAll('input[type="checkbox"]:checked'))
-                                .map(cb => cb.value);
-                if (checked.length === 0) {
-                alert("Silakan pilih minimal satu bagian!");
-                return;
-                }
-                // Redirect dengan parameter bagian=... (dipisah koma)
-                const tw = "{{ $_GET['tw'] }}";
-                const tahun = "{{ $_GET['Tahun'] }}";
-                const jenkel = "{{ $_GET['jenkel'] }}";
-                const usia = "{{ $_GET['usia'] }}";
-                const pekerjaan = "{{ $_GET['pekerjaan'] }}";
-                const pendidikan = "{{ $_GET['pendidikan'] }}";
-                const bagian = checked.join(",");
-                window.location.href = `/rekapTotal?tw=${tw}&Tahun=${tahun}&bagian=${bagian}&jenkel=${jenkel}&usia=${usia}&pekerjaan=${pekerjaan}&pendidikan=${pendidikan}`;
-            }
-            </script>
-            
-            
-        </ul>
-    </div>
-</div>
-
-                        {{-- download --}}
-                        <a href="{{ route('exports.download', ['type' => 'resume', 'jenkel' => $_GET['jenkel'], 'usia' => $_GET['usia'], 'pekerjaan' => $_GET['pekerjaan'], 'pendidikan' => $_GET['pendidikan'], 'tahun' => $_GET['tahun'], 'Tahun' => $_GET['Tahun'] ?? $_GET['tahun'] ?? date('Y'), 'Bulan' => $_GET['Bulan'] ?? null]) }}"
+                        {{-- download (mengikuti filter Tahun + Pilar) --}}
+                        <a href="{{ route('exports.download', ['type' => 'resume', 'jenkel' => $_GET['jenkel'], 'usia' => $_GET['usia'], 'pekerjaan' => $_GET['pekerjaan'], 'pendidikan' => $_GET['pendidikan'], 'Tahun' => \App\Support\SurveyFilter::year()] + (\App\Support\SurveyFilter::isAllPilar() ? [] : ['bagian' => \App\Support\SurveyFilter::pilarCsv()])) }}"
                             class="py-1 text-center items-center  bg-gradient-to-br from-[#EA580C] from-60%  to-[#FDBA74] to-95% rounded-full font-bold text-sm px-3  w-full  text-gray-900"
                             style="font-family:'Roboto'">
                             <p>DOWNLOAD</p>
@@ -409,8 +251,17 @@ $pendidikan = $_GET['pendidikan'] ?? '0';
                                             class="px-6 py-3 w-[50px] text-center text-xs font-medium text-gray-900 uppercase {{ $_GET['pendidikan'] == 0 ? 'hidden' : '' }}">
                                             PENDIDIKAN</th>
                                         <th scope="col" rowspan="2"
-                                            class="px-6 py-3 w-[50px] text-center text-xs font-medium text-gray-900 uppercase {{ $_GET['pendidikan'] == 0 ? 'hidden' : '' }}">
-                                            BAGIAN</th>
+                                            class="px-6 py-3 w-[50px] text-center text-xs font-medium text-gray-900 uppercase">
+                                            DESA</th>
+                                        <th scope="col" rowspan="2"
+                                            class="px-6 py-3 w-[50px] text-center text-xs font-medium text-gray-900 uppercase">
+                                            PILAR</th>
+                                        <th scope="col" rowspan="2"
+                                            class="px-6 py-3 min-w-[200px] text-center text-xs font-medium text-gray-900 uppercase">
+                                            RINCIAN PROGRAM</th>
+                                        <th scope="col" rowspan="2"
+                                            class="px-6 py-3 w-[50px] text-center text-xs font-medium text-gray-900 uppercase">
+                                            PERUSAHAAN<br>DINILAI</th>
                                         {{-- <th scope="col" rowspan="2"
                                             class="px-6 py-3 w-[50px] text-center text-xs font-medium text-gray-900 uppercase {{ $_GET['pendidikan'] == 0 ? 'hidden' : '' }}">
                                             JENIS PELAYANAN</th> --}}
@@ -461,14 +312,15 @@ $pendidikan = $_GET['pendidikan'] ?? '0';
                                             <tr class="{{ $row % 2 == 0 ? 'bg-[#E3E3E3]' : '' }}">
 
                                                 <td class="text-center px-2 font-normal text-xs">
-                                                    {{ $row++ }}
+                                                    {{ $selects->firstItem() + $loop->index }}
+                                                    @php $row++; @endphp
                                                 </td>
                                                 {{-- <td class="text-center px-2 font-normal text-xs">
                                                     {{-- NIK intentionally left blank --}}
                                                 </td>
                                                 <td class="text-center px-2 font-normal text-xs">
-                                                    {{ $data->nama }}
-                                                </td> 
+                                                    <a href="{{ route('rekapTotal.show', $data->id) }}" class="js-admin-nav font-bold text-orange-800 hover:underline" title="Lihat detail isian responden">{{ $data->nama ?: '-' }}</a>
+                                                </td>
                                                 {{-- <td class="text-center px-2 font-normal text-xs">
                                                     {{ $data->jenisPelayanan }}
                                                 </td> --}}
@@ -488,30 +340,20 @@ $pendidikan = $_GET['pendidikan'] ?? '0';
                                                     class="text-center px-2 font-normal text-xs {{ $_GET['pendidikan'] == 0 ? 'hidden' : '' }}">
                                                     {{ $data->pendidikan }}
                                                 </td>
-                                                <td
-                                                    class="text-center px-2 font-normal text-xs {{ $_GET['jenkel'] == 0 ? 'hidden' : '' }}">
-                                                    @if($data->jenisPelayanan == 'organisasi')
-                                                        ORGANISASI
-                                                    @elseif($data->jenisPelayanan == 'umum')
-                                                        UMUM
-                                                    @elseif($data->jenisPelayanan == 'pemerintahan')
-                                                        PEMERINTAHAN
-                                                    @elseif($data->jenisPelayanan == 'adbang')
-                                                        ADMINISTRASI PEMBANGUNAN
-                                                    @elseif($data->jenisPelayanan == 'prokopim')
-                                                        PROTOKOL DAN KOMUNIKASI PIMPINAN
-                                                    @elseif($data->jenisPelayanan == 'kesra')
-                                                        KESEJAHTERAAN RAKYAT
-                                                    @elseif(\App\Support\BagianOptions::normalizeCode($data->jenisPelayanan) == 'pbj')
-                                                        PENGADAAN BARANG DAN JASA
-                                                    @elseif($data->jenisPelayanan == 'ekosda')
-                                                        PEREKONOMIAN DAN SUMBER DAYA ALAM
-                                                    @elseif($data->jenisPelayanan == 'hukum')
-                                                        HUKUM
-                                                    @else
-                                                        {{ strtoupper($data->jenisPelayanan ?? '-') }}
+                                                <td class="text-center px-2 font-normal text-xs">
+                                                    {{ $desaNames[$data->desa_id] ?? '-' }}
+                                                </td>
+                                                <td class="text-center px-2 font-normal text-xs">
+                                                    {{ $pilarNames[$data->jenisPelayanan] ?? ($data->jenisPelayanan ? strtoupper($data->jenisPelayanan) : '-') }}
+                                                </td>
+                                                <td class="text-left px-2 font-normal text-xs">
+                                                    {{ $rincianNames[$data->rincian_id] ?? '-' }}
+                                                </td>
+                                                <td class="text-center px-2 font-normal text-xs">
+                                                    {{ $data->perusahaan_dinilai ?? '-' }}
+                                                    @if ($data->perusahaan_jawaban === \App\Support\PpmCatalog::TIDAK_TAHU)
+                                                        <span class="block text-[10px] text-gray-500">jawab: tidak tahu</span>
                                                     @endif
-
                                                 </td>
                                                 {{-- <td
                                                     class="text-center px-2 font-normal text-xs {{ $_GET['usia'] == 0 ? 'hidden' : '' }}">
@@ -547,10 +389,16 @@ $pendidikan = $_GET['pendidikan'] ?? '0';
                                                 <td class="text-center px-2 font-normal text-xs">
                                                     {{ $data->created_at }}
                                                 </td>
-                                                <td class="text-center px-2 font-normal text-xs">
+                                                <td class="text-center px-2 font-normal text-xs whitespace-nowrap">
+                                                    <a href="{{ route('rekapTotal.show', $data->id) }}" class="js-admin-nav inline-block align-middle mr-1" title="Lihat detail isian responden">
+                                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6 hover:text-orange-700">
+                                                            <path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 0 1 0-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178Z" />
+                                                            <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
+                                                        </svg>
+                                                    </a>
                                                     <form onsubmit="return confirm('Apakah Anda Yakin ?');"
                                                         action="{{ route('rekapTotal.destroy', $data->id) }}"
-                                                        method="POST">
+                                                        method="POST" class="inline-block align-middle no-loading">
 
                                                         @csrf
                                                         @method('DELETE')
@@ -573,77 +421,21 @@ $pendidikan = $_GET['pendidikan'] ?? '0';
                                             </td>
                                         </tr>
                                     </tbody>
-                                    <tfoot class="bg-gradient-to-br from-[#EA580C] h-[50px] from-60%  to-[#FDBA74] to-95% text-gray-900"
-                                        style="
-                                        overflow-y:auto;">
-                                        <?php $row = 1; ?>
-                                        <t>
-
-                                            <td class="text-center px-2 font-normal text-xs">
-                                                TOTAL
+                                    <tfoot class="bg-gradient-to-br from-[#EA580C] h-[50px] from-60%  to-[#FDBA74] to-95% text-gray-900">
+                                        @php
+                                            // Kolom sebelum U1: No, Nama, Desa, Pilar, Rincian, Perusahaan + kolom demografi yang tampil
+                                            $kolomDepan = 6 + collect(['jenkel', 'usia', 'pekerjaan', 'pendidikan'])->filter(fn ($k) => ($_GET[$k] ?? '1') != 0)->count();
+                                        @endphp
+                                        <tr>
+                                            <td colspan="{{ $kolomDepan }}" class="text-center px-2 font-bold text-xs">
+                                                TOTAL ({{ number_format($totals->n ?? 0) }} penilaian)
                                             </td>
-                                            {{-- <td class="text-center px-2 font-normal text-xs">
-
-                                            </td>
-                                            <td class="text-center px-2 font-normal text-xs">
-
-                                            </td> --}}
-                                            
-                                            <td class="text-center px-2 font-normal text-xs">
-
-                                            </td>
-                                            <td class="text-center px-2 font-normal text-xs">
-
-                                            </td>
-                                            <td class="text-center px-2 font-normal text-xs">
-
-                                            </td>
-                                            <td
-                                                class="text-center px-2 font-normal text-xs {{ $_GET['jenkel'] == 0 ? 'hidden' : '' }}">
-
-                                            </td>
-                                            <td
-                                                class="text-center px-2 font-normal text-xs {{ $_GET['usia'] == 0 ? 'hidden' : '' }}">
-
-                                            </td>
-                                            <td
-                                                class="text-center px-2 font-normal text-xs {{ $_GET['pekerjaan'] == 0 ? 'hidden' : '' }}">
-
-                                            </td>
-                                            <td class="text-center px-2 font-normal text-xs">
-                                                {{ $data->u1 }}
-                                            </td>
-                                            <td class="text-center px-2 font-normal text-xs">
-                                                {{ $data->u2 }}
-                                            </td>
-                                            <td class="text-center px-2 font-normal text-xs">
-                                                {{ $data->u3 }}
-                                            </td>
-                                            <td class="text-center px-2 font-normal text-xs">
-                                                {{ $data->u4 }}
-                                            </td>
-                                            <td class="text-center px-2 font-normal text-xs">
-                                                {{ $data->u5 }}
-                                            </td>
-                                            <td class="text-center px-2 font-normal text-xs">
-                                                {{ $data->u6 }}
-                                            </td>
-                                            <td class="text-center px-2 font-normal text-xs">
-                                                {{ $data->u7 }}
-                                            </td>
-                                            <td class="text-center px-2 font-normal text-xs">
-                                                {{ $data->u8 }}
-                                            </td>
-                                            <td class="text-center px-2 font-normal text-xs">
-                                                {{ $data->u9 }}
-                                            </td>
-                                            <td class="text-center px-2 font-normal text-xs">
-
-                                            </td>
-                                            <td class="text-center px-2 font-normal text-xs">
-
-                                            </td>
-                                            </tr>
+                                            @foreach (range(1, 9) as $i)
+                                                <td class="text-center px-2 font-bold text-xs">{{ $totals->{"u{$i}"} ?? 0 }}</td>
+                                            @endforeach
+                                            <td class="text-center px-2 font-normal text-xs"></td>
+                                            <td class="text-center px-2 font-normal text-xs"></td>
+                                        </tr>
                                     </tfoot>
                                 </div>
                             </table>

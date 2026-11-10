@@ -24,23 +24,6 @@ class DashboardController extends Controller
 
      public function welcome()
     {
-        if(date('m')<=3){
-            $tw=1;
-        } else if(date('m')<=6){
-            $tw=3;
-        } else if(date('m')<=9){
-            $tw=5;
-        } else if(date('m')<=12){
-            $tw=7;
-        }
-if (array_key_exists("tw", $_GET)){
-            // echo "ada";
-        } else {
-            // echo "kosong";
-
-            // return redirect("?tw=".$tw."&Tahun=".date('Y')."&bagian=" . BagianOptions::allCodesCsv());
-        }
-
         // $tahun = date("Y");
         // dd($tahun);
           // echo (""+Session::get('subbidang'));
@@ -70,7 +53,7 @@ if (array_key_exists("tw", $_GET)){
         // Pastikan $selects terdefinisi untuk compact()
         $selects = DB::table('survey_responses')->get();
 
-        $i = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
+        $i = '/' . ltrim(request()->path(), '/');
         // dd ($jml);
 
         $bln = null;
@@ -131,13 +114,9 @@ if (array_key_exists("tw", $_GET)){
 
         $role = $user->keterangan ?? 'admin';
 
-        // Role → department mapping (mirrors the legacy logic).
-        $bagian = BagianOptions::csvForRole($role);
-
-        $tw    = (int) ceil((int) date('m') / 3);
         $tahun = date('Y');
 
-        return redirect("/rekapTotal?jenkel=1&usia=1&pekerjaan=1&pendidikan=1&tw={$tw}&Tahun={$tahun}&bagian={$bagian}&keterangan=" . urlencode($role));
+        return redirect("/rekapTotal?jenkel=1&usia=1&pekerjaan=1&pendidikan=1&Tahun={$tahun}&keterangan=" . urlencode($role));
     }
 
     public function logout(Request $request)

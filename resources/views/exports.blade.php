@@ -9,11 +9,8 @@
             ->mapWithKeys(fn ($label, $code) => [$code => [strtoupper($label), $code]])
             ->all();
 
-  // Helper URL
-  $q = http_build_query([
-      'tw'    => request('tw'),
-      'Tahun' => request('Tahun'),
-  ]);
+  // Filter tahunan (Tahun + Pilar) dibawa ke link download & kembali
+  $q = \App\Support\SurveyFilter::queryString();
 @endphp
 
 
@@ -29,7 +26,7 @@
             @if (in_array($role, ['admin', 'superadmin', 'ortal'], true))
                 <div class="lg:flex w-full justify-between gap-4 mb-[30px]">
             <ul class="grid w-full gap-2 grid-cols-1">
-                <a href="/export?{{ $q }}&bagian=setkab">
+                <a href="/export?{{ $q }}">
                 <label
                     class="inline-flex items-center justify-center w-full p-3 text-gray-900 bg-gray-800 h-full border-2 border-white rounded-lg cursor-pointer hover:text-gray-900 hover:bg-gray-600">
                     <div class="block">
@@ -74,7 +71,7 @@
                     <label class="text-gray-900 font-medium lg:text-xl text-4xl cursor-pointer"></label>
         
                 </a>
-                <a href="/nilaiRekap?jenkel=1&usia=1&pekerjaan=1&pendidikan=1&tw=1&Tahun=2026&bagian=organisasi"
+                <a href="/nilaiRekap?jenkel=1&usia=1&pekerjaan=1&pendidikan=1&{{ $q }}"
                     class="flex items-center gap-2 cursor-pointer drop-shadow-[0_3px_3px_rgba(0,0,0,0.3)]">
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"
                                         class="w-8 h-8 text-gray-900">

@@ -7,16 +7,23 @@
     $showAdminButton = $showAdminButton ?? true;
     $homeHref = $homeHref ?? '/';
     $adminHref = $adminHref ?? '/login';
-    $selectedYear = $selectedYear ?? '';
-    $selectedTw = $selectedTw ?? '';
-    $bagianQuery = $bagianQuery ?? '';
-    $selectedBagian = $selectedBagian ?? [];
-    $bagianOptions = $bagianOptions ?? [];
-    $selectedBagianNames = collect($selectedBagian)
-        ->map(fn ($key) => $bagianOptions[$key] ?? null)
-        ->filter()
-        ->values();
-    $bagianChipLabel = 'Pilar';
+
+    // Filter tahunan: Tahun + Pilar (tanpa triwulan)
+    $selectedYear = $selectedYear ?? \App\Support\SurveyFilter::year();
+    $yearOptions = $yearOptions ?? \App\Support\SurveyFilter::years();
+    $bagianOptions = $bagianOptions ?? \App\Support\SurveyFilter::pilarOptions();
+    $selectedBagian = $selectedBagian ?? \App\Support\SurveyFilter::selectedPilar();
+    $bagianQuery = $bagianQuery ?? (\App\Support\SurveyFilter::isAllPilar() ? '' : \App\Support\SurveyFilter::pilarCsv());
+    $bagianChipLabel = count($selectedBagian) >= count($bagianOptions) ? 'Semua pilar' : count($selectedBagian) . ' pilar';
+    $showPerusahaan = $showPerusahaan ?? true;
+    $perusahaanOptions = \App\Support\SurveyFilter::perusahaanOptions();
+    $selectedPerusahaan = \App\Support\SurveyFilter::selectedPerusahaan();
+    // URL dengan filter aktif; $params menimpa nilai yang sedang dipilih.
+    $navUrl = fn (array $params) => $routeBase . '?' . http_build_query(array_filter(
+        $params + ['Tahun' => $selectedYear, 'bagian' => $bagianQuery, 'perusahaan' => $selectedPerusahaan],
+        fn ($v) => $v !== null && $v !== ''
+    ));
+
     $brandTitleClass = $brandTitleClass ?? 'text-base font-extrabold tracking-tight text-[#FF8800]';
     $extraButtons = $extraButtons ?? null;
     $enableLoadingNav = $enableLoadingNav ?? false;
@@ -39,25 +46,45 @@
 
         <div class="{{ $filterWrapperClass }} overflow-visible">
 
-            <div class="filter-inline hidden">
+            <div class="filter-inline">
                 <span class="filter-inline-label">Tahun</span>
                 <details class="filter-chip">
                     <summary>
                         <span class="material-symbols-outlined text-[#FF8800] text-[16px]">calendar_today</span>
-                        <span class="filter-chip-value">{{ $selectedYear ?? 'Pilih Tahun' }}</span>
+                        <span class="filter-chip-value">{{ $selectedYear }}</span>
                         <span class="material-symbols-outlined filter-chip-caret">expand_more</span>
                     </summary>
                     <div class="filter-menu">
-                        @foreach ([2024,2025,2026] as $yearOption)
-                            <a class="{{ $loadingNavClass }} {{ $selectedYear == $yearOption ? 'is-active' : '' }}" href="{{ $routeBase }}?Tahun={{ $yearOption }}&bagian={{ $bagianQuery }}">{{ $yearOption }}</a>
+                        @foreach ($yearOptions as $yearOption)
+                            <a class="{{ $loadingNavClass }} {{ (int) $selectedYear === (int) $yearOption ? 'is-active' : '' }}"
+                               href="{{ $navUrl(['Tahun' => $yearOption]) }}">{{ $yearOption }}</a>
                         @endforeach
                     </div>
                 </details>
             </div>
 
+            @if ($showPerusahaan)
+                <div class="filter-inline">
+                    <span class="filter-inline-label">Perusahaan</span>
+                    <details class="filter-chip">
+                        <summary>
+                            <span class="material-symbols-outlined text-[#FF8800] text-[16px]">domain</span>
+                            <span class="filter-chip-value">{{ $selectedPerusahaan ?? 'Semua' }}</span>
+                            <span class="material-symbols-outlined filter-chip-caret">expand_more</span>
+                        </summary>
+                        <div class="filter-menu">
+                            <a class="{{ $loadingNavClass }} {{ $selectedPerusahaan === null ? 'is-active' : '' }}" href="{{ $navUrl(['perusahaan' => '']) }}">Semua perusahaan</a>
+                            @foreach ($perusahaanOptions as $kode => $label)
+                                <a class="{{ $loadingNavClass }} {{ $selectedPerusahaan === $kode ? 'is-active' : '' }}" href="{{ $navUrl(['perusahaan' => $kode]) }}">{{ $label }}</a>
+                            @endforeach
+                        </div>
+                    </details>
+                </div>
+            @endif
+
             @if ($showBagian)
                 <div class="filter-inline">
-                            <span class="filter-inline-label">Pilar</span>
+                    <span class="filter-inline-label">Pilar</span>
                     <details class="filter-chip min-w-[100px]">
                         <summary>
                             <span class="material-symbols-outlined text-[#FF8800] text-[16px]">tune</span>
@@ -73,7 +100,9 @@
                                     </label>
                                 @endforeach
                             </div>
-                            <button type="button" id="applyBagian" class="mt-3 w-full bg-[#FF8800] text-white text-[11px] font-black py-2 rounded-lg hover:opacity-95 transition-opacity">Terapkan Filter</button>
+                            <button type="button" id="applyBagian"
+                                data-route="{{ $routeBase }}" data-tahun="{{ $selectedYear }}" data-perusahaan="{{ $selectedPerusahaan }}"
+                                class="mt-3 w-full bg-[#FF8800] text-white text-[11px] font-black py-2 rounded-lg hover:opacity-95 transition-opacity">Terapkan Filter</button>
                         </div>
                     </details>
                 </div>
@@ -100,5 +129,23 @@
     </div>
 </nav>
 
-
-
+<script>
+    // Terapkan pilihan pilar; tahun tetap dipertahankan. Semua pilar = tanpa parameter bagian.
+    (function () {
+        const btn = document.getElementById('applyBagian');
+        if (!btn) return;
+        btn.addEventListener('click', function () {
+            const boxes = Array.from(document.querySelectorAll('.bagian-checkbox'));
+            const checked = boxes.filter((cb) => cb.checked).map((cb) => cb.value);
+            if (checked.length === 0) {
+                alert('Silakan pilih minimal satu pilar.');
+                return;
+            }
+            const params = new URLSearchParams({ Tahun: btn.dataset.tahun });
+            if (checked.length < boxes.length) params.set('bagian', checked.join(','));
+            if (btn.dataset.perusahaan) params.set('perusahaan', btn.dataset.perusahaan);
+            if (window.showPageLoading) window.showPageLoading();
+            window.location.href = btn.dataset.route + '?' + params.toString();
+        });
+    })();
+</script>

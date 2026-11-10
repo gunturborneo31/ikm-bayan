@@ -150,101 +150,21 @@ class WordController extends Controller
 
         // dd($hari, $bulan, $tahun);
         //-----------------------------------------------------------------------------------------------------------------
-        if(date('m')<=3){
-            $tw=1;
-        } else if(date('m')<=6){
-            $tw=3;
-        } else if(date('m')<=9){
-            $tw=5;
-        } else if(date('m')<=12){
-            $tw=7;
-        }
-
-        if (array_key_exists("tw", $_GET)){
-            // echo "ada";
-        } else {
-            // echo "kosong";
-
-            return redirect("export/?tw=".$tw."&Tahun=".date('Y'));
-        }
-
-        // $tahun = date("Y");
-        // dd($tahun);
-          // echo (""+Session::get('subbidang'));
-        $responden = [];
-        $singkatan = [];
-
-        $bulan = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nop', 'Des'];
-
-        error_reporting(0);
-        if ($_GET['Bulan'] == '') {
-            for ($x = 0; $x <= date('m'); $x++) {
-                $responden[$x] = DB::table("survey_responses")
-                    ->whereMonth('created_at', '=', $x + 1)
-                    ->get()
-                    ->count();
-                $singkatan[$x] = $bulan[$x];
-                $jml = date('m');
-            }
-        } else {
-            for ($x = 0; $x <= $_GET['Bulan']; $x++) {
-                $responden[$x] = DB::table("survey_responses")
-                    ->whereMonth('created_at', '=', $x + 1)
-                    ->get()
-                    ->count();
-                $singkatan[$x] = $bulan[$x];
-                $jml = $_GET['Bulan'];
-            }
-        }
-        // dd($responden);
-
-            $responden = json_encode($responden);
-            $singkatan = json_encode($singkatan);
-
-        $i = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
-        // dd ($jml);
 
         error_reporting(0);
 
-        $startDate = 'survey_responses-01-01';
+        $startDate = \App\Support\SurveyFilter::year() . '-01-01';
 
-        $endDate = 'survey_responses-10-03';
+        $endDate = \App\Support\SurveyFilter::year() . '-12-31';
 
-        if ($_GET['tw'] == null) {
-            $today = date('Y-m-d', strtotime('+1 days'));
-            $endDate = $today;
-        } elseif ($_GET['tw'] == 1) {
-            $startDate = $_GET['Tahun'] . '-01-01';
-            $endDate = $_GET['Tahun'] . '-03-31';
-        } elseif ($_GET['tw'] == 2) {
-            $startDate = $_GET['Tahun'] . '-04-01';
-            $endDate = $_GET['Tahun'] . '-06-31';
-        } elseif ($_GET['tw'] == 3) {
-            $startDate = $_GET['Tahun'] . '-01-01';
-            $endDate = $_GET['Tahun'] . '-06-31';
-        } elseif ($_GET['tw'] == 4) {
-            $startDate = $_GET['Tahun'] . '-07-01';
-            $endDate = $_GET['Tahun'] . '-09-31';
-        } elseif ($_GET['tw'] == 5) {
-            $startDate = $_GET['Tahun'] . '-01-01';
-            $endDate = $_GET['Tahun'] . '-09-31';
-        } elseif ($_GET['tw'] == 6) {
-            $startDate = $_GET['Tahun'] . '-10-01';
-            $endDate = $_GET['Tahun'] . '-12-31';
-        } elseif ($_GET['tw'] == 7) {
-            $startDate = $_GET['Tahun'] . '-01-01';
-            $endDate = $_GET['Tahun'] . '-12-31';
-        }
 
-        $bagians = $_GET['bagian'];
-        if($bagians == 'setkab'){
-            $bagians = BagianOptions::allCodesCsv();
-        }
-
-        $terms = array_values(array_unique(array_filter(array_map('trim', explode(',', $bagians )))));
+        // Pilar mengikuti filter (?bagian=...); "setkab"/kosong = semua pilar.
+        $terms = \App\Support\SurveyFilter::selectedPilar();
 
         $indexTu = ['u1', 'u2', 'u3', 'u4', 'u5', 'u6', 'u7', 'u8', 'u9'];
-        $lastDate = ['2026-01-31', '2026-02-31', '2026-03-31', '2026-04-31', '2026-05-31', '2026-06-31', '2026-07-31', '2026-08-31', '2026-09-31', '2026-10-31', '2026-11-31', '2026-12-31'];
+        // Akhir tiap bulan pada tahun terpilih (untuk grafik SKM kumulatif per bulan)
+        $tahunLaporan = \App\Support\SurveyFilter::year();
+        $lastDate = array_map(fn ($m) => date('Y-m-t 23:59:59', mktime(0, 0, 0, $m, 1, $tahunLaporan)), range(1, 12));
         // dd($indexTu);
 
         $tu = [[]];
@@ -262,19 +182,15 @@ class WordController extends Controller
             for ($j = 1; $j <= 9; $j++) {
                 $xyz = $indexTu[$j - 1];
                 // echo $xyz;
-                $nilaiTu = DB::table('survey_responses')
+                $nilaiTu = \App\Support\SurveyFilter::query()
                     ->whereBetween('created_at', [$startDate, $abc])
-                    ->whereIn('jenisPelayanan', $terms)
-                    ->where('tahun', $_GET['Tahun'] ?? date('Y'))
                     ->get()
                     ->sum($xyz);
                 array_push($x, $nilaiTu);
             }
 
-            $nnn = DB::table('survey_responses')
+            $nnn = \App\Support\SurveyFilter::query()
                 ->whereBetween('created_at', [$startDate, $abc])
-                    ->whereIn('jenisPelayanan', $terms)
-                    ->where('tahun', $_GET['Tahun'] ?? date('Y'))
                 ->get()
                 ->count();
 
@@ -306,7 +222,7 @@ class WordController extends Controller
             $x;
             $y;
             for ($j = 1; $j <= 9; $j++) {
-                $nrrTx = $nrr[$i][$j - 1] * 0.111;
+                $nrrTx = $nrr[$i][$j - 1] * (1/9);
                 array_push($x, round($nrrTx, 2));
                 $y = $y + $nrrTx;
             }
@@ -326,10 +242,7 @@ class WordController extends Controller
 
         // dd($nilaiSkm);
 
-        $baseQuery = DB::table('survey_responses')
-            ->whereBetween('created_at', [$startDate, $endDate])
-            ->whereIn('jenisPelayanan', $terms)
-            ->where('tahun', $_GET['Tahun'] ?? date('Y'));
+        $baseQuery = \App\Support\SurveyFilter::query();
 
         $tu1 = (clone $baseQuery)->get()->sum('u1');
         $tu2 = (clone $baseQuery)->get()->sum('u2');
@@ -391,15 +304,15 @@ class WordController extends Controller
             $nrr = $nrr1 + $nrr2 + $nrr3 + $nrr4 + $nrr5 + $nrr6 + $nrr7 + $nrr8 + $nrr9;
             $nrr = sprintf('%0.3f', $nrr);
 
-            $nrrt1 = sprintf('%0.3f', $nrr1 * 0.111);
-            $nrrt2 = sprintf('%0.3f', $nrr2 * 0.111);
-            $nrrt3 = sprintf('%0.3f', $nrr3 * 0.111);
-            $nrrt4 = sprintf('%0.3f', $nrr4 * 0.111);
-            $nrrt5 = sprintf('%0.3f', $nrr5 * 0.111);
-            $nrrt6 = sprintf('%0.3f', $nrr6 * 0.111);
-            $nrrt7 = sprintf('%0.3f', $nrr7 * 0.111);
-            $nrrt8 = sprintf('%0.3f', $nrr8 * 0.111);
-            $nrrt9 = sprintf('%0.3f', $nrr9 * 0.111);
+            $nrrt1 = sprintf('%0.3f', $nrr1 * (1/9));
+            $nrrt2 = sprintf('%0.3f', $nrr2 * (1/9));
+            $nrrt3 = sprintf('%0.3f', $nrr3 * (1/9));
+            $nrrt4 = sprintf('%0.3f', $nrr4 * (1/9));
+            $nrrt5 = sprintf('%0.3f', $nrr5 * (1/9));
+            $nrrt6 = sprintf('%0.3f', $nrr6 * (1/9));
+            $nrrt7 = sprintf('%0.3f', $nrr7 * (1/9));
+            $nrrt8 = sprintf('%0.3f', $nrr8 * (1/9));
+            $nrrt9 = sprintf('%0.3f', $nrr9 * (1/9));
 
             $nrrT = $nrrt1 + $nrrt2 + $nrrt3 + $nrrt4 + $nrrt5 + $nrrt6 + $nrrt7 + $nrrt8 + $nrrt9;
             $nrrT = sprintf('%0.3f', $nrrT);
@@ -423,10 +336,7 @@ class WordController extends Controller
         }
         // echo $nrrTotal;
         // echo $nrrTertimbang;
-        $baseStatsQuery = DB::table('survey_responses')
-            ->whereBetween('created_at', [$startDate, $endDate])
-            ->whereIn('jenisPelayanan', $terms)
-            ->where('tahun', $_GET['Tahun'] ?? date('Y'));
+        $baseStatsQuery = \App\Support\SurveyFilter::query();
 
         $jmlResponden = (clone $baseStatsQuery)->count();
         $jenkel_l = (clone $baseStatsQuery)->where('jenkel', 'Laki - Laki')->count();
@@ -470,72 +380,18 @@ class WordController extends Controller
         //-----------------------------------------------------------------------------------------------------------------
 
         //Open template with ${table}
-        $bagian = $_GET['bagian'];
+        // Laporan PPM memakai template umum. Nama pilar ditulis bila hanya satu pilar dipilih.
+        $templateProcessor = new TemplateProcessor(public_path('word-template/exportsetkab.docx'));
+        $pilarTerpilih = \App\Support\SurveyFilter::selectedPilar();
+        $namaBagian = count($pilarTerpilih) === 1
+            ? 'Pilar ' . (\App\Support\SurveyFilter::pilarOptions()[$pilarTerpilih[0]] ?? '')
+            : '';
 
-        if($bagian=="organisasi"){
-            $templateProcessor = new TemplateProcessor('word-template/exportorganisasi.docx');
-            $namaBagian = "Bagian Organisasi";
-        } else if($bagian=="umum"){
-            $templateProcessor = new TemplateProcessor('word-template/exportumum.docx');
-            $namaBagian = "Bagian Umum";
-        } else if($bagian=="pemerintahan"){
-            $templateProcessor = new TemplateProcessor('word-template/exportpemerintahan.docx');
-            $namaBagian = "Bagian Pemerintahan";
-        } else if($bagian=="adbang"){
-            $templateProcessor = new TemplateProcessor('word-template/exportadbang.docx');
-            $namaBagian = "Bagian Adbang";
-        } else if($bagian=="prokopim"){
-            $templateProcessor = new TemplateProcessor('word-template/exportprokopim.docx');
-            $namaBagian = "Bagian Prokopim";
-        } else if($bagian=="kesra"){
-            $templateProcessor = new TemplateProcessor('word-template/exportkesra.docx');
-            $namaBagian = "Bagian Kesra";
-        } else if($bagian=="barjas"){
-            $templateProcessor = new TemplateProcessor('word-template/exportbarjas.docx');
-            $namaBagian = "Bagian Barjas";
-        } else if($bagian=="ekosda"){
-            $templateProcessor = new TemplateProcessor('word-template/exportekosda.docx');
-            $namaBagian = "Bagian Ekosda";
-        } else if($bagian=="hukum"){
-            $templateProcessor = new TemplateProcessor('word-template/exporthukum.docx');
-            $namaBagian = "Bagian Hukum";
-        } else if($bagian=="setkab"){
-            $templateProcessor = new TemplateProcessor('word-template/exportsetkab.docx');
-            $namaBagian = "";
-        }
-
-        $tahun = $_GET['Tahun'];
-        $tw = $_GET['tw'];
-
-        if($tw==1){
-            $bulanAwal = "Januari";
-            $bulanAkhir = "Maret";
-            $semester = "1";
-        } else if($tw==2){
-            $bulanAwal = "Aprli";
-            $bulanAkhir = "Juni";
-            $semester = "1";
-        } else if($tw==3){
-            $bulanAwal = "Januari";
-            $bulanAkhir = "Juni";
-            $semester = "1";
-        } else if($tw==4){
-            $bulanAwal = "Juli";
-            $bulanAkhir = "September";
-            $semester = "2";
-        } else if($tw==5){
-            $bulanAwal = "Januari";
-            $bulanAkhir = "September";
-            $semester = "2";
-        } else if($tw==6){
-            $bulanAwal = "Oktober";
-            $bulanAkhir = "Desember";
-            $semester = "2";
-        } else if($tw==7){
-            $bulanAwal = "Januari";
-            $bulanAkhir = "Desember";
-            $semester = "2";
-        }
+        // Penilaian bersifat tahunan: periode laporan selalu Januari - Desember.
+        $tahun = $tahunLaporan;
+        $bulanAwal = "Januari";
+        $bulanAkhir = "Desember";
+        $semester = "2";
 
         if ($nilaiSKM >= 0 and $nilaiSKM <= 24.99) {
             $mutu = 'E';
@@ -755,10 +611,7 @@ class WordController extends Controller
         $chartPekerjaan->getStyle()->setWidth(Converter::inchToEmu(4))->setHeight(Converter::inchToEmu(2));
         $templateProcessor->setChart('chartPekerjaan', $chartPekerjaan);
 
-        $baseReportQuery = DB::table('survey_responses')
-            ->whereBetween('created_at', [$startDate, $endDate])
-            ->whereIn('jenisPelayanan', $terms)
-            ->where('tahun', $_GET['Tahun'] ?? date('Y'));
+        $baseReportQuery = \App\Support\SurveyFilter::query();
 
         $nilaiUnsur = (clone $baseReportQuery)->get();
 
@@ -847,15 +700,15 @@ class WordController extends Controller
             $nrr = $nrr1 + $nrr2 + $nrr3 + $nrr4 + $nrr5 + $nrr6 + $nrr7 + $nrr8 + $nrr9;
             $nrr = sprintf('%0.3f', $nrr);
 
-            $nrrt1 = sprintf('%0.3f', $nrr1 * 0.111);
-            $nrrt2 = sprintf('%0.3f', $nrr2 * 0.111);
-            $nrrt3 = sprintf('%0.3f', $nrr3 * 0.111);
-            $nrrt4 = sprintf('%0.3f', $nrr4 * 0.111);
-            $nrrt5 = sprintf('%0.3f', $nrr5 * 0.111);
-            $nrrt6 = sprintf('%0.3f', $nrr6 * 0.111);
-            $nrrt7 = sprintf('%0.3f', $nrr7 * 0.111);
-            $nrrt8 = sprintf('%0.3f', $nrr8 * 0.111);
-            $nrrt9 = sprintf('%0.3f', $nrr9 * 0.111);
+            $nrrt1 = sprintf('%0.3f', $nrr1 * (1/9));
+            $nrrt2 = sprintf('%0.3f', $nrr2 * (1/9));
+            $nrrt3 = sprintf('%0.3f', $nrr3 * (1/9));
+            $nrrt4 = sprintf('%0.3f', $nrr4 * (1/9));
+            $nrrt5 = sprintf('%0.3f', $nrr5 * (1/9));
+            $nrrt6 = sprintf('%0.3f', $nrr6 * (1/9));
+            $nrrt7 = sprintf('%0.3f', $nrr7 * (1/9));
+            $nrrt8 = sprintf('%0.3f', $nrr8 * (1/9));
+            $nrrt9 = sprintf('%0.3f', $nrr9 * (1/9));
 
             $nrrT = $nrrt1 + $nrrt2 + $nrrt3 + $nrrt4 + $nrrt5 + $nrrt6 + $nrrt7 + $nrrt8 + $nrrt9;
             $nrrT = sprintf('%0.3f', $nrrT);
@@ -974,8 +827,11 @@ class WordController extends Controller
 
         $templateProcessor->setComplexBlock('{tabelSaran}', $table);
         //save template with table
-        $templateProcessor->saveAs('Laporan SKM '.$namaBagian.'PT Bayan Tahun '.$tahun.'.docx');
-        return response()->download('Laporan SKM '.$namaBagian.'PT Bayan Tahun '.$tahun.'.docx')->deleteFileAfterSend(true);
+        // Simpan sementara di storage (bukan folder public), lalu kirim dan hapus.
+        $namaFile = trim('Laporan SKM ' . $namaBagian . ' PT Bayan Tahun ' . $tahun) . '.docx';
+        $path = storage_path('app/laporan-' . uniqid() . '.docx');
+        $templateProcessor->saveAs($path);
+        return response()->download($path, $namaFile)->deleteFileAfterSend(true);
     }
 
     // $document_with_table = new \PhpOffice\PhpWord\PhpWord();

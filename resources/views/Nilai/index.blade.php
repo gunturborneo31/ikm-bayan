@@ -2,101 +2,54 @@
 
 error_reporting(0);
 
-$startDate = '2024-01-01';
+$startDate = \App\Support\SurveyFilter::year() . '-01-01';
 
-$endDate = '2024-10-03';
+$endDate = \App\Support\SurveyFilter::year() . '-12-31';
 
-if ($_GET['tw'] == null) {
-    $today = date('Y-m-d', strtotime('+1 days'));
-    $endDate = $today;
-} elseif ($_GET['tw'] == 1) {
-    $startDate = $_GET['Tahun'] . '-01-01';
-    $endDate = $_GET['Tahun'] . '-03-31';
-} elseif ($_GET['tw'] == 2) {
-    $startDate = $_GET['Tahun'] . '-04-01';
-    $endDate = $_GET['Tahun'] . '-06-31';
-} elseif ($_GET['tw'] == 3) {
-    $startDate = $_GET['Tahun'] . '-01-01';
-    $endDate = $_GET['Tahun'] . '-06-31';
-} elseif ($_GET['tw'] == 4) {
-    $startDate = $_GET['Tahun'] . '-07-01';
-    $endDate = $_GET['Tahun'] . '-09-31';
-} elseif ($_GET['tw'] == 5) {
-    $startDate = $_GET['Tahun'] . '-01-01';
-    $endDate = $_GET['Tahun'] . '-09-31';
-} elseif ($_GET['tw'] == 6) {
-    $startDate = $_GET['Tahun'] . '-10-01';
-    $endDate = $_GET['Tahun'] . '-12-31';
-} elseif ($_GET['tw'] == 7) {
-    $startDate = $_GET['Tahun'] . '-01-01';
-    $endDate = $_GET['Tahun'] . '-12-31';
-}
 
-$terms = array_values(array_unique(array_filter(array_map('trim', explode(',', $_GET['bagian'])))));
+$terms = \App\Support\SurveyFilter::selectedPilar();
 
-$tu1 = DB::table('survey_responses')->where('tahun', $_GET['Tahun'] ?? date('Y'))
-    ->whereBetween('created_at', [$startDate, $endDate])
-    ->whereIn('jenisPelayanan', $terms)
+$tu1 = \App\Support\SurveyFilter::query()
     ->get()
     ->sum('u1');
 
-$tu2 = DB::table('survey_responses')->where('tahun', $_GET['Tahun'] ?? date('Y'))
-    ->whereBetween('created_at', [$startDate, $endDate])
-    ->whereIn('jenisPelayanan', $terms)
+$tu2 = \App\Support\SurveyFilter::query()
     ->get()
     ->sum('u2');
 
-$tu3 = DB::table('survey_responses')->where('tahun', $_GET['Tahun'] ?? date('Y'))
-    ->whereBetween('created_at', [$startDate, $endDate])
-    ->whereIn('jenisPelayanan', $terms)
+$tu3 = \App\Support\SurveyFilter::query()
     ->get()
     ->sum('u3');
 
-$tu4 = DB::table('survey_responses')->where('tahun', $_GET['Tahun'] ?? date('Y'))
-    ->whereBetween('created_at', [$startDate, $endDate])
-    ->whereIn('jenisPelayanan', $terms)
+$tu4 = \App\Support\SurveyFilter::query()
     ->get()
     ->sum('u4');
 
-$tu5 = DB::table('survey_responses')->where('tahun', $_GET['Tahun'] ?? date('Y'))
-    ->whereBetween('created_at', [$startDate, $endDate])
-    ->whereIn('jenisPelayanan', $terms)
+$tu5 = \App\Support\SurveyFilter::query()
     ->get()
     ->sum('u5');
 
-$tu6 = DB::table('survey_responses')->where('tahun', $_GET['Tahun'] ?? date('Y'))
-    ->whereBetween('created_at', [$startDate, $endDate])
-    ->whereIn('jenisPelayanan', $terms)
+$tu6 = \App\Support\SurveyFilter::query()
     ->get()
     ->sum('u6');
 
-$tu7 = DB::table('survey_responses')->where('tahun', $_GET['Tahun'] ?? date('Y'))
-    ->whereBetween('created_at', [$startDate, $endDate])
-    ->whereIn('jenisPelayanan', $terms)
+$tu7 = \App\Support\SurveyFilter::query()
     ->get()
     ->sum('u7');
 
-$tu8 = DB::table('survey_responses')->where('tahun', $_GET['Tahun'] ?? date('Y'))
-    ->whereBetween('created_at', [$startDate, $endDate])
-    ->whereIn('jenisPelayanan', $terms)
+$tu8 = \App\Support\SurveyFilter::query()
     ->get()
     ->sum('u8');
 
-$tu9 = DB::table('survey_responses')->where('tahun', $_GET['Tahun'] ?? date('Y'))
-    ->whereBetween('created_at', [$startDate, $endDate])
-    ->whereIn('jenisPelayanan', $terms)
+$tu9 = \App\Support\SurveyFilter::query()
     ->get()
     ->sum('u9');
 
-$n = DB::table('survey_responses')->where('tahun', $_GET['Tahun'] ?? date('Y'))
-    ->whereBetween('created_at', [$startDate, $endDate])
-    ->whereIn('jenisPelayanan', $terms)
+$n = \App\Support\SurveyFilter::query()
     ->get()
     ->count();
 
-$tu9 = DB::table('survey_responses')->where('tahun', $_GET['Tahun'] ?? date('Y'))
-    ->whereBetween('created_at', [$startDate, $endDate])
-    ->whereIn('jenisPelayanan', $terms)
+$tu9 = \App\Support\SurveyFilter::query()
     ->get()
     ->sum('u9');
 
@@ -142,15 +95,15 @@ if ($n == 0) {
     $nrr = $nrr1 + $nrr2 + $nrr3 + $nrr4 + $nrr5 + $nrr6 + $nrr7 + $nrr8 + $nrr9;
     $nrr = sprintf('%0.3f', $nrr);
 
-    $nrrt1 = sprintf('%0.3f', $nrr1 * 0.111);
-    $nrrt2 = sprintf('%0.3f', $nrr2 * 0.111);
-    $nrrt3 = sprintf('%0.3f', $nrr3 * 0.111);
-    $nrrt4 = sprintf('%0.3f', $nrr4 * 0.111);
-    $nrrt5 = sprintf('%0.3f', $nrr5 * 0.111);
-    $nrrt6 = sprintf('%0.3f', $nrr6 * 0.111);
-    $nrrt7 = sprintf('%0.3f', $nrr7 * 0.111);
-    $nrrt8 = sprintf('%0.3f', $nrr8 * 0.111);
-    $nrrt9 = sprintf('%0.3f', $nrr9 * 0.111);
+    $nrrt1 = sprintf('%0.3f', $nrr1 * (1/9));
+    $nrrt2 = sprintf('%0.3f', $nrr2 * (1/9));
+    $nrrt3 = sprintf('%0.3f', $nrr3 * (1/9));
+    $nrrt4 = sprintf('%0.3f', $nrr4 * (1/9));
+    $nrrt5 = sprintf('%0.3f', $nrr5 * (1/9));
+    $nrrt6 = sprintf('%0.3f', $nrr6 * (1/9));
+    $nrrt7 = sprintf('%0.3f', $nrr7 * (1/9));
+    $nrrt8 = sprintf('%0.3f', $nrr8 * (1/9));
+    $nrrt9 = sprintf('%0.3f', $nrr9 * (1/9));
 
     $nrrT = $nrrt1 + $nrrt2 + $nrrt3 + $nrrt4 + $nrrt5 + $nrrt6 + $nrrt7 + $nrrt8 + $nrrt9;
     $nrrT = sprintf('%0.3f', $nrrT);
@@ -182,121 +135,12 @@ if ($n == 0) {
                     <div>
                         <label class="text-gray-900 font-bold text-xl"> </label>
                     </div>
-                    <?php
-                    
-                    error_reporting(0);
-                    if ($_GET['triwulan'] == '') {
-                    } else {
-                        $_SESSION['triwulan'] = $_GET['triwulan'];
-                    }
-                    
-                    if ($_GET['tw'] == '') {
-                    } else {
-                        $_SESSION['tw'] = $_GET['tw'];
-                    }
-                    ?>
                     <div class="flex flex-row items-center gap-3">
 
-                        {{-- tahun --}}
-                        <div class="flex flex-row items-center gap-3">
-                            <label for="tahun"
-                                class=" font-bold text-gray-900 text-4xl lg:text-base drop-shadow-[0_3px_3px_rgba(0,0,0,0.3)]">
-                                Tahun</label>
-                            <select id="tahun"  
-                                onChange="document.location.href='/nilaiRekap?tw=' + {{ $_GET['tw'] }} + '&Tahun=' + this.value + '&bagian={{ $_GET['bagian'] }}'"
-                                class="bg-white border border-gray-400 text-gray-900 font-bold text-4xl w-[200px] text-center lg:w-fit lg:text-sm rounded-full px-3 py-1">
-                    
-                                <option value="2023" <?php if($_GET['Tahun']=='2023') echo 'selected'; ?>>2023</option>
-                                <option value="2024" <?php if($_GET['Tahun']=='2024') echo 'selected'; ?>>2024</option>
-                                <option value="2025" <?php if($_GET['Tahun']=='2024') echo 'selected'; ?>>2025</option>
-                                <option value="2026" <?php if($_GET['Tahun']=='2026' || $_GET['Tahun']=='') echo 'selected'; ?>>2026</option>
-                            </select>
-                        </div>
-                    
-                        {{-- triwulan --}}
-                        <div class="flex flex-row items-center gap-3">
-                            <label for="tw"
-                                class=" font-bold text-gray-900 text-4xl lg:text-base drop-shadow-[0_3px_3px_rgba(0,0,0,0.3)]">
-                                Triwulan</label>
-                            <select id="tw"
-                                onChange="document.location.href='/nilaiRekap?tw=' + this.value + '&Tahun=' + {{ $_GET['Tahun'] }} + '&bagian={{ $_GET['bagian'] }}'"
-                                class="bg-white border border-gray-400 text-gray-900 font-bold text-4xl w-[300px] text-center lg:w-fit lg:text-sm rounded-full px-3 py-1">
-                    
-                                <option value="1" <?php if($_GET['tw']=='1') echo 'selected'; ?>>TW 1 (Jan, Feb, Mar)</option>
-                                <option value="2" <?php if($_GET['tw']=='2') echo 'selected'; ?>>TW 2 (Apr, Mei, Jun)</option>
-                                <option value="3" <?php if($_GET['tw']=='3') echo 'selected'; ?>>TW 2 (Jan s/d Jun)</option>
-                                <option value="4" <?php if($_GET['tw']=='4') echo 'selected'; ?>>TW 3 (Jul, Agu, Sep)</option>
-                                <option value="5" <?php if($_GET['tw']=='5') echo 'selected'; ?>>TW 3 (Jan s/d Sep)</option>
-                                <option value="6" <?php if($_GET['tw']=='6') echo 'selected'; ?>>TW 4 (Okt, Nop, Des)</option>
-                                <option value="7" <?php if($_GET['tw']=='7') echo 'selected'; ?>>TW 4 (Jan s/d Des)</option>
-                            </select>
-                        </div>
-                    
-                        {{-- bagian --}}
-                        <div class="flex flex-row items-center gap-2">
-                            <label for="countries" class="text-black font-bold text-sm ">
-                                Bagian</label>
-
-                            <button id="dropdownDefaultButton" data-dropdown-toggle="dropdownP"
-                                class="flex items-center  bg-[#ffffff] border border-gray-400 font-bold   text-sm rounded-full px-3 py-1"
-                                type="button">Pilih <svg class="w-2.5 h-2.5 ms-3" aria-hidden="true"
-                                    xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6">
-                                    <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"
-                                        stroke-width="2" d="m1 1 4 4 4-4" />
-                                </svg>
-                            </button>
-
-                            <!-- Dropdown menu -->
-                            <div id="dropdownP"
-                                class="z-10 hidden border bg-[#ffffff] divide-y divide-gray-100 rounded-lg shadow w-[250px] dark:bg-gray-700">
-                                <ul class="py-2 text-sm text-gray-700 dark:text-gray-200"
-                                    aria-labelledby="dropdownDefaultButton">
-                                    <ul class="space-y-2 px-4 py-1  ">
-                                       @foreach($allOptions as $key => $label)
-                @if(in_array($key, $visibleKeys))
-                <li class="flex items-center gap-4 py-1">
-                    <input id="{{ $key }}" type="checkbox" value="{{ $key }}"
-                        {{ str_contains($bagianQuery, $key) ? 'checked' : '' }}
-                        class="w-4 h-4 text-orange-600 border-orange-300 rounded focus:ring-orange-500">
-                    <label for="{{ $key }}" class="text-sm text-gray-700 dark:text-gray-200">
-                    {{ $label }}
-                    </label>
-                </li>
-                @endif
-            @endforeach
-                                    </ul>
-                                    
-                                    <!-- Tombol Tampilkan -->
-                                    <div class="mt-4 px-4 py-1">
-                                        <button onclick="submitCheckboxes()" 
-                                                class="w-full px-4 py-2 text-gray-900 rounded-lg bg-gradient-to-br from-[#EA580C] from-60% font-bold to-[#FDBA74] to-95%">
-                                        Tampilkan
-                                        </button>
-                                    </div>
-                                    
-                                    <script>
-                                    function submitCheckboxes() {
-                                        const checked = Array.from(document.querySelectorAll('input[type="checkbox"]:checked'))
-                                                        .map(cb => cb.value);
-                                        if (checked.length === 0) {
-                                        alert("Silakan pilih minimal satu bagian!");
-                                        return;
-                                        }
-                                        // Redirect dengan parameter bagian=... (dipisah koma)
-                                        const tw = "{{ $_GET['tw'] }}";
-                                        const tahun = "{{ $_GET['Tahun'] }}";
-                                        const bagian = checked.join(",");
-                                        window.location.href = `/nilaiRekap?tw=${tw}&Tahun=${tahun}&bagian=${bagian}`;
-                                    }
-                                    </script>
-                                    
-                                    
-                                </ul>
-                            </div>
-                        </div>
+                        @include('partials.admin-filter', ['route' => '/nilaiRekap'])
 
                         {{-- download --}}
-                        <a href="/exports?tw={{ $_GET['tw'] }}&Tahun={{ $_GET['Tahun'] }}&bagian={{ $_GET['bagian'] }}&keterangan={{ $_GET['keterangan'] }}"
+                        <a href="/exports?{{ \App\Support\SurveyFilter::queryString(['keterangan' => $_GET['keterangan'] ?? session('keterangan', 'admin')]) }}"
                             class="py-1 text-center items-center  bg-gradient-to-br from-[#EA580C] from-60%  to-[#FDBA74] to-95% rounded-full font-bold text-sm px-3  w-full  text-gray-900"
                             style="font-family:'Roboto'">
                             <p>DOWNLOAD LAPORAN SKM</p>
@@ -506,7 +350,7 @@ if ($n == 0) {
                                     1
                                 </td>
                                 <td class="whitespace-nowrap  px-4 font-normal text-xs">
-                                    Persyaratan
+                                    Kesesuaian Program
                                 </td>
                                 <td class="whitespace-nowrap text-center px-4 font-normal text-xs">
                                     {{ $nrr1 }}
@@ -536,7 +380,7 @@ if ($n == 0) {
                                     2
                                 </td>
                                 <td class="whitespace-nowrap  px-4 font-normal text-xs">
-                                    Prosedur Pelayanan
+                                    Kualitas Pelaksanaan
                                 </td>
                                 <td class="whitespace-nowrap text-center px-4 font-normal text-xs">
                                     {{ $nrr2 }}
@@ -566,7 +410,7 @@ if ($n == 0) {
                                     3
                                 </td>
                                 <td class="whitespace-nowrap  px-4 font-normal text-xs">
-                                    Waktu Pelaksana
+                                    Keberlanjutan
                                 </td>
                                 <td class="whitespace-nowrap text-center px-4 font-normal text-xs">
                                     {{ $nrr3 }}
@@ -596,7 +440,7 @@ if ($n == 0) {
                                     4
                                 </td>
                                 <td class="whitespace-nowrap  px-4 font-normal text-xs">
-                                    Biaya / Tarif
+                                    Kejelasan Informasi
                                 </td>
                                 <td class="whitespace-nowrap text-center px-4 font-normal text-xs">
                                     {{ $nrr4 }}
@@ -626,7 +470,7 @@ if ($n == 0) {
                                     5
                                 </td>
                                 <td class="whitespace-nowrap  px-4 font-normal text-xs">
-                                    Produk Layanan
+                                    Kompetensi Tim
                                 </td>
                                 <td class="whitespace-nowrap text-center px-4 font-normal text-xs">
                                     {{ $nrr5 }}
@@ -656,7 +500,7 @@ if ($n == 0) {
                                     6
                                 </td>
                                 <td class="whitespace-nowrap  px-4 font-normal text-xs">
-                                    Kompetensi Pelaksana
+                                    Kemudahan Akses
                                 </td>
                                 <td class="whitespace-nowrap text-center px-4 font-normal text-xs">
                                     {{ $nrr6 }}
@@ -686,7 +530,7 @@ if ($n == 0) {
                                     7
                                 </td>
                                 <td class="whitespace-nowrap  px-4 font-normal text-xs">
-                                    Perilaku Pelaksana
+                                    Sikap dan Etika
                                 </td>
                                 <td class="whitespace-nowrap text-center px-4 font-normal text-xs">
                                     {{ $nrr7 }}
@@ -716,7 +560,7 @@ if ($n == 0) {
                                     8
                                 </td>
                                 <td class="whitespace-wrap  px-4 font-normal text-xs">
-                                    Sarana dan Prasarana
+                                    Dampak Sosial dan Ekonomi
                                 </td>
                                 <td class="whitespace-nowrap text-center px-4 font-normal text-xs">
                                     {{ $nrr8 }}
@@ -746,7 +590,7 @@ if ($n == 0) {
                                     9
                                 </td>
                                 <td class="whitespace-nowrap  px-4 font-normal text-xs">
-                                    Penanganan Pengaduan
+                                    Kebermanfaatan
                                 </td>
                                 <td class="whitespace-nowrap text-center px-4 font-normal text-xs">
                                     {{ $nrr9 }}

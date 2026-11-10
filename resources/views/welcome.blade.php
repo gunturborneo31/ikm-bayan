@@ -2,90 +2,76 @@
 
 error_reporting(0);
 
+use App\Support\SurveyFilter;
 
-$yearOptions = ['2023', '2024', '2025', '2026'];
-// PILAR filter
-$pilarParam = $_GET['bagian'] ?? '';
-$defaultPilar = array_keys(\App\Support\BagianOptions::codeNameMap());
-$terms = array_values(array_unique(array_filter(array_map('trim', explode(',', $pilarParam)))));
-if (empty($terms)) {
-    $terms = $defaultPilar;
-}
+// Filter tahunan: Tahun + Pilar (lihat App\Support\SurveyFilter)
+$tahunAktif = SurveyFilter::year();
+$terms = SurveyFilter::selectedPilar();
+$yearOptions = array_reverse(SurveyFilter::years()); // grafik tren: tahun lama -> baru
+
 $indexTu = ['u1', 'u2', 'u3', 'u4', 'u5', 'u6', 'u7', 'u8', 'u9'];
 $aggregateSelect = 'COUNT(*) as total';
 foreach ($indexTu as $index) {
     $aggregateSelect .= ', COALESCE(SUM(' . $index . '),0) as ' . $index;
 }
 
-$nilaiSkmTahun = [];
-foreach ($yearOptions as $tahun) {
-    $startDate = $tahun . '-01-01';
-    $endDate = $tahun . '-12-31';
-    $aggregate = DB::table('survey_responses')
-        ->whereIn('jenisPelayanan', $terms)
-        ->whereBetween('created_at', [$startDate, $endDate])
-        ->selectRaw($aggregateSelect)
-        ->first();
+$skmDari = static function ($aggregate) use ($indexTu): float {
     $total = (int) ($aggregate->total ?? 0);
+    if ($total === 0) {
+        return 0;
+    }
     $weightedTotal = 0;
     foreach ($indexTu as $index) {
-        $avg = $total === 0 ? 0 : round(((float) ($aggregate->{$index} ?? 0)) / $total, 2);
-        $weightedTotal += $avg * 0.111;
+        $weightedTotal += round(((float) ($aggregate->{$index} ?? 0)) / $total, 2) * (1 / 9);
     }
-    $nilaiSkmTahun[] = round($weightedTotal * 25, 2);
-}
+
+    return round($weightedTotal * 25, 2);
+};
+
+// Tren SKM per tahun (filter pilar tetap berlaku)
+$perTahun = DB::table('survey_responses')
+    ->when(!SurveyFilter::isAllPilar(), fn ($q) => $q->whereIn('jenisPelayanan', $terms))
+    ->when(SurveyFilter::selectedPerusahaan(), fn ($q, $kode) => $q->where('perusahaan_dinilai', $kode))
+    ->selectRaw('tahun, ' . $aggregateSelect)
+    ->groupBy('tahun')
+    ->get()
+    ->keyBy('tahun');
+$nilaiSkmTahun = array_map(fn ($y) => $skmDari($perTahun[$y] ?? null), $yearOptions);
 $nilaiSkm = json_encode($nilaiSkmTahun);
 
-// Ambil tahun terakhir yang ada data
-$tahunTerakhir = null;
-for ($i = count($yearOptions) - 1; $i >= 0; $i--) {
-    if (($nilaiSkmTahun[$i] ?? 0) > 0) {
-        $tahunTerakhir = $yearOptions[$i];
-        break;
-    }
-}
-if (!$tahunTerakhir) {
-    $tahunTerakhir = end($yearOptions);
-}
-
-
-// Query agregat unsur dan total responden untuk tahun terakhir (tanpa filter bagian, agar total responden benar)
-$startDate = $tahunTerakhir . '-01-01';
-$endDate = $tahunTerakhir . '-12-31';
-$aggregateUnsur = DB::table('survey_responses')
-    ->whereBetween('created_at', [$startDate, $endDate])
-    ->selectRaw($aggregateSelect)
-    ->first();
+// Nilai SKM, NRR per unsur dan jumlah penilaian untuk tahun + pilar terpilih
+$aggregateUnsur = SurveyFilter::query()->selectRaw($aggregateSelect)->first();
 $totalUnsur = (int) ($aggregateUnsur->total ?? 0);
 $nrrPerUnsur = [];
 foreach ($indexTu as $index) {
     $nrrPerUnsur[] = $totalUnsur === 0 ? 0 : round(((float) ($aggregateUnsur->{$index} ?? 0)) / $totalUnsur, 3);
 }
 
-// Nilai SKM untuk tahun terakhir
 $nilaiSKM = 0;
 if ($totalUnsur > 0) {
     $weightedTotal = 0;
     foreach ($nrrPerUnsur as $nrr) {
-        $weightedTotal += $nrr * 0.111;
+        $weightedTotal += $nrr * (1/9);
     }
     $nilaiSKM = round($weightedTotal * 25, 2);
 }
 
-// Total responden tahun terakhir (tanpa filter bagian)
-$jmlResponden = DB::table('survey_responses')->count();
+// Responden unik: satu responden bisa menilai beberapa program (responden_uuid sama)
+$jmlResponden = (int) (SurveyFilter::query()
+    ->selectRaw('COUNT(DISTINCT responden_uuid) + SUM(CASE WHEN responden_uuid IS NULL THEN 1 ELSE 0 END) as n')
+    ->value('n') ?? 0);
 
 
 $unsurPelayanan = [
-    'Persyaratan',
-    'Sistem, Mekanisme dan Prosedur',
-    'Waktu Penyelesaian',
-    'Biaya / Tarif',
-    'Produk Spesifikasi Jenis Pelayanan',
-    'Kompetensi Pelaksana',
-    'Perilaku Pelaksana',
-    'Sarana dan Prasarana',
-    'Penanganan Pengaduan, Saran & Masukan',
+    'Kesesuaian Program',
+    'Kualitas Pelaksanaan',
+    'Keberlanjutan',
+    'Kejelasan Informasi',
+    'Kompetensi Tim',
+    'Kemudahan Akses',
+    'Sikap dan Etika',
+    'Dampak Sosial dan Ekonomi',
+    'Kebermanfaatan',
 ];
 
 $getMutuBySkm = static function (float $value): string {
@@ -337,12 +323,7 @@ $nilaiSkm = json_encode($nilaiSkm);
 
 @include('partials.top-nav-filters', [
     'routeBase' => '/',
-    'selectedYear' => null, // tahun di-nonaktifkan
-    'selectedTw' => null,
-    'bagianQuery' => $_GET['bagian'] ?? '',
     'showBagian' => true,
-    'selectedBagian' => $terms ?? [],
-    'bagianOptions' => \App\Support\BagianOptions::codeNameMap(),
     'showHomeButton' => false,
     'showAdminButton' => true,
     'enableLoadingNav' => true,
@@ -385,7 +366,7 @@ $nilaiSkm = json_encode($nilaiSkm);
                 </div>
 
                 <div class="flex flex-col gap-3 shrink-0">
-                    <a class="js-nav" href="dashboard/?Tahun=2024&bagian={{ \App\Support\BagianOptions::allCodesCsv() }}">
+                    <a class="js-nav" href="/dashboard?{{ \App\Support\SurveyFilter::queryString() }}">
                         <button class="w-full bg-white hover:bg-[#ffd6aa] transition-all py-3 rounded-[1vw] flex items-center justify-center gap-2 text-[11px] font-black text-[#FF8800] border border-2 border-[#ffab4c]">
                             <span class="material-symbols-outlined text-xl">group</span>
                             INFO RESPONDEN
@@ -533,24 +514,8 @@ $nilaiSkm = json_encode($nilaiSkm);
 ])
 
 <script>
-    const applyBagianButton = document.getElementById('applyBagian');
-    if (applyBagianButton) {
-        applyBagianButton.addEventListener('click', () => {
-            const checked = Array.from(document.querySelectorAll('.bagian-checkbox:checked')).map((cb) => cb.value);
-            if (checked.length === 0) {
-                alert('Silakan pilih minimal satu bagian.');
-                return;
-            }
-            window.showPageLoading();
-            const tw = '{{ $_GET['tw'] }}';
-            const tahun = '{{ $_GET['Tahun'] }}';
-            const bagian = checked.join(',');
-            window.location.href = `/?tw=${tw}&Tahun=${tahun}&bagian=${bagian}`;
-        });
-    }
-
     const data = @json($nilaiSkmTahun ?? []);
-    const tahun = [2023, 2024, 2025, 2026];
+    const tahun = @json($yearOptions);
     const barsContainer = document.getElementById('yearlyBars');
     const safeData = Array.isArray(data) ? data : [];
 

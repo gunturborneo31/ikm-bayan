@@ -327,7 +327,7 @@
                             <tbody class="divide-y divide-slate-50">
                                 <tr class="hover:bg-slate-50 transition-colors">
                                     <td class="py-2 px-4 text-[11px] font-black">1</td>
-                                    <td class="py-2 px-4 text-[11px] font-medium">Persyaratan</td>
+                                    <td class="py-2 px-4 text-[11px] font-medium">Kesesuaian Program</td>
                                     <td class="py-2 px-4 text-[11px] font-black text-center">3.50</td>
                                     <td class="py-2 px-4 text-center"><span
                                             class="bg-[#26C281] text-white w-5 h-5 inline-flex items-center justify-center rounded-lg text-[9px] font-black shadow-sm">A</span>
@@ -335,7 +335,7 @@
                                 </tr>
                                 <tr class="hover:bg-slate-50 transition-colors">
                                     <td class="py-2 px-4 text-[11px] font-black">2</td>
-                                    <td class="py-2 px-4 text-[11px] font-medium">Sistem, Mekanisme dan Prosedur</td>
+                                    <td class="py-2 px-4 text-[11px] font-medium">Kualitas Pelaksanaan</td>
                                     <td class="py-2 px-4 text-[11px] font-black text-center">3.42</td>
                                     <td class="py-2 px-4 text-center"><span
                                             class="bg-[#26C281] text-white w-5 h-5 inline-flex items-center justify-center rounded-lg text-[9px] font-black shadow-sm">A</span>
@@ -343,7 +343,7 @@
                                 </tr>
                                 <tr class="hover:bg-slate-50 transition-colors">
                                     <td class="py-2 px-4 text-[11px] font-black">3</td>
-                                    <td class="py-2 px-4 text-[11px] font-medium">Waktu Penyelesaian</td>
+                                    <td class="py-2 px-4 text-[11px] font-medium">Keberlanjutan</td>
                                     <td class="py-2 px-4 text-[11px] font-black text-center">3.38</td>
                                     <td class="py-2 px-4 text-center"><span
                                             class="bg-[#3B82F6] text-white w-5 h-5 inline-flex items-center justify-center rounded-lg text-[9px] font-black shadow-sm">B</span>
@@ -351,7 +351,7 @@
                                 </tr>
                                 <tr class="hover:bg-slate-50 transition-colors">
                                     <td class="py-2 px-4 text-[11px] font-black">4</td>
-                                    <td class="py-2 px-4 text-[11px] font-medium">Biaya/Tarif</td>
+                                    <td class="py-2 px-4 text-[11px] font-medium">Kejelasan Informasi</td>
                                     <td class="py-2 px-4 text-[11px] font-black text-center">3.80</td>
                                     <td class="py-2 px-4 text-center"><span
                                             class="bg-[#26C281] text-white w-5 h-5 inline-flex items-center justify-center rounded-lg text-[9px] font-black shadow-sm">A</span>
@@ -359,8 +359,7 @@
                                 </tr>
                                 <tr class="hover:bg-slate-50 transition-colors">
                                     <td class="py-2 px-4 text-[11px] font-black">5</td>
-                                    <td class="py-2 px-4 text-[11px] font-medium">Produk Spesifikasi Jenis Pelayanan
-                                    </td>
+                                    <td class="py-2 px-4 text-[11px] font-medium">Kompetensi Tim</td>
                                     <td class="py-2 px-4 text-[11px] font-black text-center">3.45</td>
                                     <td class="py-2 px-4 text-center"><span
                                             class="bg-[#26C281] text-white w-5 h-5 inline-flex items-center justify-center rounded-lg text-[9px] font-black shadow-sm">A</span>
@@ -368,7 +367,7 @@
                                 </tr>
                                 <tr class="hover:bg-slate-50 transition-colors">
                                     <td class="py-2 px-4 text-[11px] font-black">6</td>
-                                    <td class="py-2 px-4 text-[11px] font-medium">Kompetensi Pelaksana</td>
+                                    <td class="py-2 px-4 text-[11px] font-medium">Kemudahan Akses</td>
                                     <td class="py-2 px-4 text-[11px] font-black text-center">3.20</td>
                                     <td class="py-2 px-4 text-center"><span
                                             class="bg-[#3B82F6] text-white w-5 h-5 inline-flex items-center justify-center rounded-lg text-[9px] font-black shadow-sm">B</span>
@@ -376,7 +375,7 @@
                                 </tr>
                                 <tr class="hover:bg-slate-50 transition-colors">
                                     <td class="py-2 px-4 text-[11px] font-black">7</td>
-                                    <td class="py-2 px-4 text-[11px] font-medium">Perilaku Pelaksana</td>
+                                    <td class="py-2 px-4 text-[11px] font-medium">Sikap dan Etika</td>
                                     <td class="py-2 px-4 text-[11px] font-black text-center">3.92</td>
                                     <td class="py-2 px-4 text-center"><span
                                             class="bg-[#26C281] text-white w-5 h-5 inline-flex items-center justify-center rounded-lg text-[9px] font-black shadow-sm">A</span>
@@ -384,7 +383,7 @@
                                 </tr>
                                 <tr class="hover:bg-slate-50 transition-colors">
                                     <td class="py-2 px-4 text-[11px] font-black">8</td>
-                                    <td class="py-2 px-4 text-[11px] font-medium">Sarana dan Prasarana</td>
+                                    <td class="py-2 px-4 text-[11px] font-medium">Dampak Sosial dan Ekonomi</td>
                                     <td class="py-2 px-4 text-[11px] font-black text-center">3.60</td>
                                     <td class="py-2 px-4 text-center"><span
                                             class="bg-[#26C281] text-white w-5 h-5 inline-flex items-center justify-center rounded-lg text-[9px] font-black shadow-sm">A</span>
@@ -392,8 +391,7 @@
                                 </tr>
                                 <tr class="hover:bg-slate-50 transition-colors">
                                     <td class="py-2 px-4 text-[11px] font-black">9</td>
-                                    <td class="py-2 px-4 text-[11px] font-medium">Penanganan Pengaduan, Saran &amp;
-                                        Masukan</td>
+                                    <td class="py-2 px-4 text-[11px] font-medium">Kebermanfaatan</td>
                                     <td class="py-2 px-4 text-[11px] font-black text-center">3.75</td>
                                     <td class="py-2 px-4 text-center"><span
                                             class="bg-[#26C281] text-white w-5 h-5 inline-flex items-center justify-center rounded-lg text-[9px] font-black shadow-sm">A</span>

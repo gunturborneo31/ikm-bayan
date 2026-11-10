@@ -4,16 +4,8 @@ error_reporting(0);
 
 
 
-$bagianParam = $_GET['bagian'] ?? '';
-$defaultBagian = array_keys(\App\Support\BagianOptions::codeNameMap());
-$terms = array_values(array_unique(array_filter(array_map('trim', explode(',', $bagianParam)))));
-if (empty($terms)) {
-    $terms = $defaultBagian;
-}
-$_GET['bagian'] = empty($bagianParam) ? implode(',', $terms) : $bagianParam;
-
-$baseQuery = DB::table('survey_responses')
-    ->whereIn('jenisPelayanan', $terms);
+// Filter tahunan (Tahun + Pilar). Satu responden dihitung sekali walau menilai beberapa program.
+$baseQuery = \App\Support\SurveyFilter::respondenQuery();
 
 $jenkelAgg = (clone $baseQuery)
     ->selectRaw("COALESCE(SUM(CASE WHEN jenkel = 'Laki - Laki' THEN 1 ELSE 0 END), 0) as laki_laki")
@@ -75,14 +67,15 @@ $pekerjaanData = [
     ['label' => 'Lainnya', 'total' => (int) ($pekerjaanAgg->lainnya ?? 0)],
 ];
 
+$jenisRespondenData = \App\Support\SurveyFilter::jenisRespondenData($baseQuery);
+
 $sections = [
+    ['key' => 'jenisResponden', 'title' => 'Jenis Responden', 'data' => $jenisRespondenData, 'colors' => ['#EA580C', '#2563EB', '#059669', '#7C3AED']],
     ['key' => 'jenkel', 'title' => 'Jenis Kelamin', 'data' => $jenkelData, 'colors' => ['#1D4ED8', '#DC2626']],
     ['key' => 'umur', 'title' => 'Rentang Umur', 'data' => $umurData, 'colors' => ['#2563EB', '#EA580C', '#059669', '#7C3AED']],
     ['key' => 'pendidikan', 'title' => 'Tingkat Pendidikan', 'data' => $pendidikanData, 'colors' => ['#1D4ED8', '#DC2626', '#059669', '#7C3AED', '#F59E0B', '#0891B2']],
     ['key' => 'pekerjaan', 'title' => 'Jenis Pekerjaan', 'data' => $pekerjaanData, 'colors' => ['#0EA5E9', '#EF4444', '#22C55E', '#A855F7', '#F97316', '#14B8A6']],
 ];
-
-$bagianOptions = \App\Support\BagianOptions::codeNameMap();
 
 ?>
 <!doctype html>
@@ -151,11 +144,7 @@ $bagianOptions = \App\Support\BagianOptions::codeNameMap();
 @include('partials.top-nav-filters', [
     'routeBase' => '/dashboard',
     'brandTitle' => 'E-SKM PPM Bayan Group',
-    'selectedTw' => $_GET['tw'],
-    'bagianQuery' => $_GET['bagian'],
     'showBagian' => true,
-    'selectedBagian' => $terms,
-    'bagianOptions' => $bagianOptions,
     'showHomeButton' => true,
     'showAdminButton' => false,
     'enableLoadingNav' => true,
@@ -180,23 +169,6 @@ $bagianOptions = \App\Support\BagianOptions::codeNameMap();
 ])
 
     <script>
-
-        const applyBagianButton = document.getElementById('applyBagian');
-        if (applyBagianButton) {
-            applyBagianButton.addEventListener('click', () => {
-                const checked = Array.from(document.querySelectorAll('.bagian-checkbox:checked')).map((cb) => cb.value);
-                if (checked.length === 0) {
-                    alert('Silakan pilih minimal satu bagian.');
-                    return;
-                }
-
-                window.showPageLoading();
-                const tw = '{{ $_GET['tw'] }}';
-                const tahun = '{{ $_GET['Tahun'] }}';
-                const bagian = checked.join(',');
-                window.location.href = `/dashboard?tw=${tw}&Tahun=${tahun}&bagian=${bagian}`;
-            });
-        }
 
         const makePieChart = (elementId, labels, series, colors) => {
             const el = document.getElementById(elementId);

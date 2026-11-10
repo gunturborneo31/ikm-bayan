@@ -1,21 +1,8 @@
 @php
-    $i = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
-    $bagian = $_GET['bagian'] ?? \App\Support\BagianOptions::allCodesCsv();
-    $keterangan = $_GET['keterangan'] ?? 'admin';
-    $das = 'pengaturan';
-    $navFocus = 'py-2 my-2   bg-white rounded-lg font-bold text-base pl-3  w-full flex text-gray-800';
-    $nav =
-        'py-2 my-2 ml-1  rounded-lg font-mono text-base  drop-shadow-[0_1px_1px_rgba(0,0,0,0.9)] w-full flex text-[#ffffff]';
-
-    if (date('m') <= 3) {
-        $tw = 1;
-    } elseif (date('m') <= 6) {
-        $tw = 3;
-    } elseif (date('m') <= 9) {
-        $tw = 5;
-    } elseif (date('m') <= 12) {
-        $tw = 7;
-    }
+    $i = '/' . request()->path();
+    // Filter laporan tahunan (Tahun + Pilar) dibawa ke semua menu.
+    $keterangan = $_GET['keterangan'] ?? session('keterangan', 'admin');
+    $filterQs = 'jenkel=1&usia=1&pekerjaan=1&pendidikan=1&' . \App\Support\SurveyFilter::queryString(['keterangan' => $keterangan]);
 @endphp
 
 <aside class="fixed left-0 top-0 z-40 h-[58px] lg:h-screen w-full lg:w-[215px] p-2 lg:p-3 bg-gradient-to-r lg:bg-gradient-to-b from-[#EA580C] via-[#F97316] to-[#FB923C] border-b lg:border-b-0 lg:border-r border-orange-200/70 shadow-xl overflow-hidden lg:overflow-visible">
@@ -31,29 +18,37 @@
         </a>
 
         <nav class="mt-0 lg:mt-4 flex-1 hidden lg:block space-y-1.5 text-[12px] font-extrabold tracking-wide">
-            <a href="/rekapTotal?jenkel=1&usia=1&pekerjaan=1&pendidikan=1&tw={{ $tw }}&Tahun={{ date('Y') }}&bagian={{ $bagian }}&keterangan={{ $keterangan }}"
+            <a href="/rekap-ppm?Tahun={{ \App\Support\SurveyFilter::year() }}"
+                class="js-admin-nav block rounded-xl px-3 py-2.5 transition {{ str_contains($i, 'rekap-ppm') ? 'bg-white text-orange-900 shadow-md' : 'text-white hover:bg-orange-100/20' }}">
+                REKAP PPM
+            </a>
+            <a href="/rekapTotal?{{ $filterQs }}"
                 class="js-admin-nav block rounded-xl px-3 py-2.5 transition {{ str_contains($i, 'rekapTotal') ? 'bg-white text-orange-900 shadow-md' : 'text-white hover:bg-orange-100/20' }}">
                 RESUME
             </a>
-            <a href="/nilaiUnsur?jenkel=1&usia=1&pekerjaan=1&pendidikan=1&tw={{ $tw }}&Tahun={{ date('Y') }}&bagian={{ $bagian }}&keterangan={{ $keterangan }}"
+            <a href="/nilaiUnsur?{{ $filterQs }}"
                 class="js-admin-nav block rounded-xl px-3 py-2.5 transition {{ str_contains($i, 'nilaiUnsur') ? 'bg-white text-orange-900 shadow-md' : 'text-white hover:bg-orange-100/20' }}">
                 NILAI UNSUR
             </a>
-            <a href="/nilaiRekap?jenkel=1&usia=1&pekerjaan=1&pendidikan=1&tw={{ $tw }}&Tahun={{ date('Y') }}&bagian={{ $bagian }}&keterangan={{ $keterangan }}"
+            <a href="/nilaiRekap?{{ $filterQs }}"
                 class="js-admin-nav block rounded-xl px-3 py-2.5 transition {{ str_contains($i, 'nilaiRekap') ? 'bg-white text-orange-900 shadow-md' : 'text-white hover:bg-orange-100/20' }}">
                 NILAI
             </a>
-            <a href="/dashboardAdmin/create?jenkel=1&usia=1&pekerjaan=1&pendidikan=1&tw={{ $tw }}&Tahun={{ date('Y') }}&bagian={{ $bagian }}&keterangan={{ $keterangan }}"
+            <a href="/dashboardAdmin/create?{{ $filterQs }}"
                 class="js-admin-nav block rounded-xl px-3 py-2.5 transition {{ str_contains($i, 'dashboard') ? 'bg-white text-orange-900 shadow-md' : 'text-white hover:bg-orange-100/20' }}">
                 DASHBOARD
             </a>
-            <a href="/sub-jenis?jenkel=1&usia=1&pekerjaan=1&pendidikan=1&tw={{ $tw }}&Tahun={{ date('Y') }}&bagian={{ $bagian }}&keterangan={{ $keterangan }}"
-                class="js-admin-nav block rounded-xl px-3 py-2.5 transition {{ str_contains($i, 'sub-jenis') ? 'bg-white text-orange-900 shadow-md' : 'text-white hover:bg-orange-100/20' }}">
-                SUB PELAYANAN
+            <a href="/master-ppm"
+                class="js-admin-nav block rounded-xl px-3 py-2.5 transition {{ str_contains($i, 'master-ppm') ? 'bg-white text-orange-900 shadow-md' : 'text-white hover:bg-orange-100/20' }}">
+                MASTER DATA PPM
+            </a>
+
+            <a href="/admin/input-responden" class="block rounded-xl px-3 py-2.5 transition text-white hover:bg-orange-100/20">
+                INPUT RESPONDEN
             </a>
 
             <a href="/admin/offline-skm" class="js-admin-nav block rounded-xl px-3 py-2.5 transition {{ str_contains($i, 'offline-skm') ? 'bg-white text-orange-900 shadow-md' : 'text-white hover:bg-orange-100/20' }}">
-                INPUT OFFLINE SKM
+                IMPORT EXCEL
             </a>
         </nav>
 
