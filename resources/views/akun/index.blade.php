@@ -12,7 +12,7 @@
             <h2 class="text-lg font-extrabold text-orange-800">Akun Pengguna</h2>
             <p class="text-sm text-gray-600">
                 <b>Admin</b>: semua fitur. <b>Surveyor</b>: semua fitur kecuali Master Data PPM dan Akun Pengguna.
-                Setiap data yang diinput lewat Input Responden atau Import Excel tercatat atas nama akun penginputnya.
+                Setiap data yang diinput lewat Input Responden{{ config('skm.import_excel') ? ' atau Import Excel' : '' }} tercatat atas nama akun penginputnya.
             </p>
         </div>
 

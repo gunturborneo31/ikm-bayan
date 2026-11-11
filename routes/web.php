@@ -137,10 +137,13 @@ Route::middleware('admin.session')->group(function () {
 // Offline SKM Admin
 Route::middleware('admin.session')->group(function () {
     // Import Excel: download format -> upload -> analisis duplikat -> import baris terpilih
-    Route::get('/admin/offline-skm', [\App\Http\Controllers\OfflineSkmController::class, 'page'])->name('admin.offline-skm');
-    Route::get('/admin/offline-skm/format', [\App\Http\Controllers\OfflineSkmController::class, 'template'])->name('admin.offline-skm.template');
-    Route::post('/admin/offline-skm/analisis', [\App\Http\Controllers\OfflineSkmController::class, 'analyze'])->name('admin.offline-skm.analyze');
-    Route::post('/admin/import-offline-skm', [\App\Http\Controllers\OfflineSkmController::class, 'import'])->name('admin.import-offline-skm');
+    // Disembunyikan untuk semua akun; aktifkan dengan SKM_IMPORT_EXCEL=true di .env
+    Route::middleware('fitur.import_excel')->group(function () {
+        Route::get('/admin/offline-skm', [\App\Http\Controllers\OfflineSkmController::class, 'page'])->name('admin.offline-skm');
+        Route::get('/admin/offline-skm/format', [\App\Http\Controllers\OfflineSkmController::class, 'template'])->name('admin.offline-skm.template');
+        Route::post('/admin/offline-skm/analisis', [\App\Http\Controllers\OfflineSkmController::class, 'analyze'])->name('admin.offline-skm.analyze');
+        Route::post('/admin/import-offline-skm', [\App\Http\Controllers\OfflineSkmController::class, 'import'])->name('admin.import-offline-skm');
+    });
 
     // Input responden oleh admin (bisa offline, data disinkronkan lewat endpoint JSON ini)
     Route::get('/admin/input-responden', [\App\Http\Controllers\AdminRespondenController::class, 'page'])->name('admin.input-responden');

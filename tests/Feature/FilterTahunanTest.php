@@ -49,6 +49,29 @@ class FilterTahunanTest extends TestCase
         $this->assertSame(3, $this->countFor(['Tahun' => '2025', 'tw' => '1']));
     }
 
+    public function test_filter_rentang_tanggal(): void
+    {
+        foreach (['2031-01-10', '2031-03-15', '2031-03-31 18:30:00', '2031-06-01'] as $i => $tgl) {
+            DB::table('survey_responses')->insert(['tahun' => 2031, 'jenisPelayanan' => 'pendidikan', 'nama' => 'Uji Filter',
+                'nohp' => "08{$i}", 'jenkel' => 'Perempuan', 'usia' => 30, 'created_at' => $tgl, 'updated_at' => now()]
+                + array_combine(array_map(fn ($u) => "u{$u}", range(1, 9)), array_fill(0, 9, 3)));
+        }
+
+        $this->assertSame(4, $this->countFor(['Tahun' => '2031']));
+        $this->assertSame(2, $this->countFor(['Tahun' => '2031', 'tanggal_awal' => '2031-03-01', 'tanggal_akhir' => '2031-03-31'])); // 31 Mar sore ikut
+        $this->assertSame(3, $this->countFor(['Tahun' => '2031', 'tanggal_awal' => '2031-03-01'])); // hanya tanggal awal
+        $this->assertSame(1, $this->countFor(['Tahun' => '2031', 'tanggal_akhir' => '2031-02-28'])); // hanya tanggal akhir
+        $this->assertSame(2, $this->countFor(['Tahun' => '2031', 'tanggal_awal' => '2031-03-31', 'tanggal_akhir' => '2031-03-01'])); // terbalik -> ditukar
+        $this->assertSame(4, $this->countFor(['Tahun' => '2031', 'tanggal_awal' => '2031-02-30', 'tanggal_akhir' => 'kemarin'])); // tidak valid -> diabaikan
+
+        // Halaman Resume: tabel, form tanggal, link reset
+        $res = $this->withSession(['user_id' => 1, 'keterangan' => 'admin'])
+            ->get('/rekapTotal?jenkel=1&usia=1&pekerjaan=1&pendidikan=1&Tahun=2031&tanggal_awal=2031-03-01&tanggal_akhir=2031-03-31');
+        $res->assertOk()->assertSee('name="tanggal_awal"', false)->assertSee('value="2031-03-01"', false)->assertSee('Reset tanggal')
+            ->assertSee('TOTAL (2 penilaian)')
+            ->assertSee('tanggal_awal=2031-03-01', false); // ikut di link download & toggle kolom
+    }
+
     public function test_filter_perusahaan(): void
     {
         $this->insertRow(2025, 'pendidikan');

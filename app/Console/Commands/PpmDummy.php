@@ -17,7 +17,7 @@ use Illuminate\Support\Str;
  * Semua baris dummy ditandai responden_uuid berawalan "dummy-" sehingga
  * mudah dihapus dan tidak bercampur dengan data asli.
  *
- *   php artisan ppm:dummy                 buat ulang dummy (tahun lalu + tahun ini)
+ *   php artisan ppm:dummy                 buat ulang dummy (tahun berjalan)
  *   php artisan ppm:dummy --tahun=2026    hanya tahun tertentu (boleh diulang)
  *   php artisan ppm:dummy --hapus         hapus semua data dummy
  */
@@ -72,7 +72,7 @@ class PpmDummy extends Command
         }
 
         $tahunIni = (int) date('Y');
-        $daftarTahun = array_map('intval', $this->option('tahun')) ?: [$tahunIni - 1, $tahunIni];
+        $daftarTahun = array_map('intval', $this->option('tahun')) ?: [$tahunIni];
         mt_srand(20261110); // hasil sama setiap dijalankan
 
         $total = 0;

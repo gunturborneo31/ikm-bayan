@@ -55,6 +55,7 @@ class Kernel extends HttpKernel
     protected $middlewareAliases = [
         'admin.session' => \App\Http\Middleware\EnsureAdminSession::class,
         'admin.role' => \App\Http\Middleware\EnsureAdminRole::class,
+        'fitur.import_excel' => \App\Http\Middleware\EnsureImportExcelAktif::class,
         'auth' => \App\Http\Middleware\Authenticate::class,
         'auth.basic' => \Illuminate\Auth\Middleware\AuthenticateWithBasicAuth::class,
         'auth.session' => \Illuminate\Session\Middleware\AuthenticateSession::class,

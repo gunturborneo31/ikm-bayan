@@ -28,7 +28,8 @@
             onchange="if (window.showAdminLoading) window.showAdminLoading(); document.location.href = this.value"
             class="bg-white border border-gray-400 text-gray-900 font-bold text-sm text-center rounded-full px-3 py-1">
             @foreach (\App\Support\SurveyFilter::years() as $y)
-                <option value="{{ $filterUrl(['Tahun' => $y]) }}" @selected($y === $filterYear)>{{ $y }}</option>
+                {{-- Ganti tahun: rentang tanggal (milik tahun lain) dikosongkan --}}
+                <option value="{{ $filterUrl(['Tahun' => $y, 'tanggal_awal' => '', 'tanggal_akhir' => '']) }}" @selected($y === $filterYear)>{{ $y }}</option>
             @endforeach
         </select>
     </div>

@@ -262,56 +262,69 @@ $nilaiSkm = json_encode($nilaiSkm);
 
 @include('partials.filter-ui-styles', ['chipMinWidth' => '136px'])
 
-        /* ─── Mobile responsive ───────────────────────────────── */
-        @media (max-width: 767px) {
-            /* Allow full-page scroll on mobile */
-            html, body { overflow: visible !important; height: auto !important; }
+        /* ─── Responsif ─────────────────────────────────────────
+           >= 1280px : dashboard 3 kolom pas satu layar
+           768–1279px: 2 kolom, halaman bisa digulir
+           < 768px   : 1 kolom (HP) */
 
-            /* Tighten main padding */
-            main { padding-left: 0.5rem !important; padding-right: 0.5rem !important; padding-bottom: 5rem; }
+        /* Semua layar di bawah 1280px: tinggi kartu mengikuti isi, tidak ada yang terpotong */
+        @media (max-width: 1279px) {
+            html, body { overflow-x: hidden; overflow-y: auto !important; height: auto !important; }
+            main { overflow: visible !important; }
 
-            /* Stack grid to single column */
-            .grid-cols-12 { grid-template-columns: 1fr !important; }
-            [class*="col-span-"] { grid-column: span 1 !important; }
-
-            /* Remove fixed heights – let content breathe */
             [class*="h-\[60\%\]"],
             [class*="h-\[320px\]"] { height: auto !important; }
             [class*="h-28"],
             [class*="h-36"] { height: auto !important; }
             [class*="min-h-0"] { min-height: 0 !important; }
 
-            /* Chart area: give reasonable fixed height on mobile */
-            #monthlyBars { height: 12rem !important; flex: none !important; }
+            /* Kartu Nilai SKM: tinggi tetap yang wajar */
+            .pattern-bg { height: auto !important; min-height: 13rem; padding: 1.5rem !important; }
+            .pattern-bg h1 { font-size: clamp(3.5rem, 9vw, 5rem) !important; }
 
-            /* Nilai SKM card: compact height on mobile */
-            .pattern-bg { height: 13rem !important; }
+            /* Kinerja & Mutu: tinggi menyesuaikan isi */
+            .grid-cols-6 > div { min-height: 6.5rem; }
 
-            /* SKM value: smaller on mobile */
-            .pattern-bg h1 { font-size: 4rem !important; }
+            /* Legenda & tabel unsur tampil utuh */
+            .space-y-3 { overflow: visible !important; }
+            tbody tr { min-height: 2.1rem; }
 
-            /* Remove heavy x-padding from grid inner wrapper */
-            .px-16 { padding-left: 0.5rem !important; padding-right: 0.5rem !important; }
-
-            /* Nav: compact on mobile */
-            nav > div { flex-wrap: wrap; gap: 0.25rem; padding-left: 0.5rem; padding-right: 0.5rem; }
+            /* Baris filter (di bawah logo) bisa digeser ke samping bila tidak muat */
             nav > div > div:nth-child(2) {
-                order: 3;
-                width: 100%;
-                overflow-x: auto;
                 -ms-overflow-style: none;
                 scrollbar-width: none;
                 padding-bottom: 0.35rem;
             }
             nav > div > div:nth-child(2)::-webkit-scrollbar { display: none; }
+        }
 
-            /* Legenda: allow natural height */
-            .space-y-3 { overflow: visible !important; }
+        /* HP */
+        @media (max-width: 767px) {
+            /* Ruang untuk navigasi bawah */
+            main { padding-left: 0.5rem !important; padding-right: 0.5rem !important; padding-bottom: 6rem !important; }
+
+            .grid-cols-12 { grid-template-columns: 1fr !important; }
+            [class*="col-span-"] { grid-column: span 1 !important; }
+
+            /* Nav: logo & tombol tetap satu baris, judul situs disingkat */
+            nav > div { gap: 0.25rem; padding-left: 0.25rem; padding-right: 0.25rem; }
+            nav > div > div:first-child span { font-size: 0.8rem; line-height: 1.1; }
+            nav > div > div:first-child .mx-4 { display: none; }
+            nav > div > div:last-child a,
+            nav > div > div:last-child button { padding: 0.4rem 0.7rem !important; font-size: 0.68rem !important; }
+        }
+
+        /* Laptop lebar tapi layar pendek (mis. 1366x600): jangan dikunci satu layar */
+        @media (min-width: 1280px) and (max-height: 700px) {
+            body { height: auto !important; overflow: visible !important; }
+            main { overflow: visible !important; }
+            .pattern-bg { min-height: 14rem; }
         }
     </style>
 </head>
 
-<body class="bg-slate-100 text-on-surface h-screen overflow-hidden flex flex-col">
+{{-- Layout dashboard 1 layar (tanpa scroll) hanya di layar lebar >= 1280px; di bawah itu halaman bisa digulir --}}
+<body class="bg-slate-100 text-on-surface min-h-screen flex flex-col xl:h-screen xl:overflow-hidden">
     <div id="loadingOverlay" class="hidden fixed inset-0 z-[999] bg-white/70 backdrop-blur-sm items-center justify-center">
         <div class="bg-white border border-slate-200 shadow-lg rounded-full px-5 py-3 flex items-center gap-2 text-[12px] font-black text-[#FF8800]">
             <span class="material-symbols-outlined animate-spin">progress_activity</span>
@@ -329,14 +342,16 @@ $nilaiSkm = json_encode($nilaiSkm);
     'enableLoadingNav' => true,
     'extraButtons' => '<a href="https://www.bayan.com.sg/id" target="_blank" rel="noopener noreferrer" class="bg-[#FF8800] text-white px-4 py-2 rounded-full font-extrabold text-xs hover:opacity-90 active:scale-95 duration-200 whitespace-nowrap">Website Resmi Bayan</a>',
     'navClass' => 'shrink-0 bg-white shadow-sm z-50 px-3 md:px-8 py-1 md:py-1.5',
-    'containerClass' => 'max-w-full mx-auto flex flex-wrap md:flex-nowrap items-center justify-between gap-1',
-    'filterWrapperClass' => 'flex items-center gap-2 md:gap-6 order-last md:order-none w-full md:w-auto overflow-x-auto no-scrollbar py-0.5 md:py-0',
+    // Filter pindah ke baris sendiri di bawah logo bila layar < 1280px (agar tidak bertumpuk)
+    'containerClass' => 'max-w-full mx-auto flex flex-wrap xl:flex-nowrap items-center justify-between gap-1',
+    'filterWrapperClass' => 'flex items-center gap-3 xl:gap-6 order-last xl:order-none w-full xl:w-auto overflow-x-auto no-scrollbar py-1 xl:py-0',
 ])
 
-    <main class="flex-1 flex flex-col p-4 gap-4 px-4 md:px-8 w-full md:overflow-hidden">
-        <div class="flex-1 grid grid-cols-1 md:grid-cols-12 px-2 md:px-16 gap-4 md:min-h-0">
+    {{-- HP: 1 kolom · tablet/laptop kecil (768–1279px): 2 kolom · layar lebar (>=1280px): 3 kolom satu layar --}}
+    <main class="flex-1 flex flex-col p-4 gap-4 px-4 md:px-8 w-full xl:overflow-hidden">
+        <div class="flex-1 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-12 px-0 xl:px-16 gap-4 xl:min-h-0">
             {{-- #kolom1 --}}
-            <div class="md:col-span-4 flex flex-col gap-4 overflow-visible">
+            <div class="md:col-span-1 xl:col-span-4 flex flex-col gap-4 overflow-visible">
                 <div class="pattern-bg card-elevated p-8 flex flex-col items-center justify-center text-center h-[60%] relative overflow-hidden rounded-[1vw]">
                     <div class="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full -mr-24 -mt-24 blur-3xl"></div>
                     <div class="absolute bottom-0 left-0 w-48 h-48 bg-black/5 rounded-full -ml-16 -mb-16 blur-2xl"></div>
@@ -353,7 +368,7 @@ $nilaiSkm = json_encode($nilaiSkm);
                             <p class="font-black text-gray-800 uppercase  text-[10px]">KINERJA</p>
                             <span class="material-symbols-outlined text-gray-80 text-sm ">speed</span>
                         </div>
-                        <p class="font-black text-[#FF8800] leading-tight uppercase text-xl text-center mt-3">{{ $kinerjaLabel }}</p>
+                        <p class="font-black text-[#FF8800] leading-tight uppercase text-base sm:text-lg xl:text-xl text-center mt-3 break-words">{{ $kinerjaLabel }}</p>
                     </div>
 
                     <div class="bg-white pattern-bg-light col-span-2 card-elevated p-4 flex flex-col  relative border border-slate-100 rounded-[1vw] overflow-hidden items-center">
@@ -381,9 +396,9 @@ $nilaiSkm = json_encode($nilaiSkm);
                 </div>
             </div>
 
-            {{-- #kolom2 --}}
-            <div class="md:col-span-5 flex flex-col gap-4 md:min-h-0">
-                <div class="bg-white card-elevated p-5 flex flex-col border border-slate-100 md:min-h-0 rounded-[1vw] md:flex-1">
+            {{-- #kolom2 (di tablet tampil di bawah, selebar 2 kolom) --}}
+            <div class="md:col-span-2 md:order-last xl:order-none xl:col-span-5 flex flex-col gap-4 xl:min-h-0">
+                <div class="bg-white card-elevated p-5 flex flex-col border border-slate-100 xl:min-h-0 rounded-[1vw] xl:flex-1">
                     <div class="flex justify-between items-center mb-6">
                         <h2 class="text-xs font-black uppercase tracking-tight">Tren SKM Tahunan</h2>
                         <div class="flex items-center gap-2 text-[10px] font-black text-on-surface-variant bg-slate-50 px-3 py-1 rounded-full">
@@ -394,7 +409,7 @@ $nilaiSkm = json_encode($nilaiSkm);
                     <div id="yearlyBars" class="flex items-end justify-between gap-0.5 px-1 pb-2 w-full"></div>
                 </div>
 
-                <div class="bg-white card-elevated overflow-visible flex flex-col md:h-[320px] h-auto border border-slate-100 rounded-[1vw] shrink-0">
+                <div class="bg-white card-elevated overflow-visible flex flex-col xl:h-[320px] h-auto border border-slate-100 rounded-[1vw] shrink-0">
                     <div class="h-full overflow-hidden flex flex-col">
                         <table class="w-full text-left h-full flex flex-col">
                             <thead class="shrink-0">
@@ -429,8 +444,8 @@ $nilaiSkm = json_encode($nilaiSkm);
             </div>
 
             {{-- #kolom3 --}}
-            <div class="md:col-span-3 flex flex-col gap-4 md:min-h-0">
-                <div class="p-6 card-elevated relative overflow-hidden bg-white md:h-36 h-auto py-5 shrink-0 flex flex-col justify-center border border-slate-100 rounded-[1vw]">
+            <div class="md:col-span-1 xl:col-span-3 flex flex-col gap-4 xl:min-h-0">
+                <div class="p-6 card-elevated relative overflow-hidden bg-white xl:h-36 h-auto py-5 shrink-0 flex flex-col justify-center border border-slate-100 rounded-[1vw]">
                     <div class="absolute -right-8 -top-8 w-48 h-48 bg-white rounded-full blur-3xl"></div>
                     <div class="relative z-10">
                         <div class="flex w-full justify-between items-end mb-3">

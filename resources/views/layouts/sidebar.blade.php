@@ -49,9 +49,12 @@
                 INPUT RESPONDEN
             </a>
 
-            <a href="/admin/offline-skm" class="js-admin-nav block rounded-xl px-3 py-2.5 transition {{ str_contains($i, 'offline-skm') ? 'bg-white text-orange-900 shadow-md' : 'text-white hover:bg-orange-100/20' }}">
-                IMPORT EXCEL
-            </a>
+            {{-- Import Excel disembunyikan untuk semua akun (lihat config/skm.php: import_excel) --}}
+            @if (config('skm.import_excel'))
+                <a href="/admin/offline-skm" class="js-admin-nav block rounded-xl px-3 py-2.5 transition {{ str_contains($i, 'offline-skm') ? 'bg-white text-orange-900 shadow-md' : 'text-white hover:bg-orange-100/20' }}">
+                    IMPORT EXCEL
+                </a>
+            @endif
 
             @if (\App\Support\Akses::isAdmin())
                 <a href="/akun" class="js-admin-nav block rounded-xl px-3 py-2.5 transition {{ str_contains($i, 'akun') ? 'bg-white text-orange-900 shadow-md' : 'text-white hover:bg-orange-100/20' }}">

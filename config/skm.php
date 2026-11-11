@@ -1,6 +1,13 @@
 <?php
 
 return [
+    /*
+     * Fitur Import Excel responden (menu & halaman /admin/offline-skm).
+     * Disembunyikan untuk semua akun (admin maupun surveyor). Aktifkan kembali
+     * dengan SKM_IMPORT_EXCEL=true di file .env lalu jalankan: php artisan config:clear
+     */
+    'import_excel' => (bool) env('SKM_IMPORT_EXCEL', false),
+
     'departments' => [
         'organisasi' => 'Bagian Organisasi',
         'umum' => 'Bagian Umum',

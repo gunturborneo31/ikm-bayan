@@ -49,7 +49,7 @@ class AkunSurveyorTest extends TestCase
         $s = $this->akun('surveyor');
 
         foreach (['/rekapTotal?Tahun=2026', '/nilaiUnsur?Tahun=2026', '/nilaiRekap?Tahun=2026', '/dashboardAdmin/create?Tahun=2026',
-            '/rekap-ppm', '/admin/input-responden', '/admin/offline-skm', '/exports'] as $url) {
+            '/rekap-ppm', '/admin/input-responden', '/exports'] as $url) {
             $this->sebagai($s)->get($url)->assertOk();
         }
         foreach (['/master-ppm', '/master-ppm/rincian/P5.1.2', '/akun'] as $url) {
@@ -61,6 +61,12 @@ class AkunSurveyorTest extends TestCase
         // Menu khusus admin tidak tampil di sidebar surveyor
         $this->sebagai($s)->get('/rekapTotal?Tahun=2026')->assertDontSee('MASTER DATA PPM')->assertDontSee('AKUN PENGGUNA')->assertSee('Surveyor');
         $this->sebagai($this->akun('admin'))->get('/rekapTotal?Tahun=2026')->assertSee('MASTER DATA PPM')->assertSee('AKUN PENGGUNA');
+
+        // Import Excel disembunyikan untuk admin maupun surveyor
+        foreach ([$s, $this->akun('admin')] as $akun) {
+            $this->sebagai($akun)->get('/rekapTotal?Tahun=2026')->assertDontSee('IMPORT EXCEL');
+            $this->sebagai($akun)->get('/admin/offline-skm')->assertRedirect()->assertSessionHas('akses_ditolak');
+        }
     }
 
     public function test_login_dan_akun_nonaktif(): void

@@ -162,10 +162,17 @@ if ($n == 0) {
           $usia = $_GET['usia'] ?? '0';
           $pekerjaan = $_GET['pekerjaan'] ?? '0';
           $pendidikan = $_GET['pendidikan'] ?? '0';
+          // Tampil/sembunyikan kolom tanpa menghilangkan filter lain (tanggal, perusahaan, penginput, dll.)
+          $kolomUrl = function (string $kolom) use ($Tahun, $jenkel, $usia, $pekerjaan, $pendidikan) {
+              $nilai = compact('jenkel', 'usia', 'pekerjaan', 'pendidikan');
+              $nilai[$kolom] = $nilai[$kolom] == '0' ? '1' : '0';
+
+              return '/rekapTotal?' . http_build_query(array_merge(request()->except('page'), ['Tahun' => $Tahun], $nilai));
+          };
         @endphp
   
         <li>
-          <a href="/rekapTotal?Tahun={{ $Tahun }}&bagian={{ urlencode($bagian) }}&jenkel={{ $jenkel=='0'?'1':'0' }}&usia={{ $usia }}&pekerjaan={{ $pekerjaan }}&pendidikan={{ $pendidikan }}"
+          <a href="{{ $kolomUrl('jenkel') }}"
              class="block px-4 py-2 hover:bg-gray-100 flex items-center gap-2">
             <p>Jenis kelamin</p>
             <svg aria-hidden="true" fill="none" stroke-width="4" stroke="currentColor" viewBox="0 0 24 24" class="w-3 h-3 {{ $jenkel=='1' ? '' : 'hidden' }}">
@@ -175,7 +182,7 @@ if ($n == 0) {
         </li>
   
         <li>
-          <a href="/rekapTotal?Tahun={{ $Tahun }}&bagian={{ urlencode($bagian) }}&jenkel={{ $jenkel }}&usia={{ $usia=='0'?'1':'0' }}&pekerjaan={{ $pekerjaan }}&pendidikan={{ $pendidikan }}"
+          <a href="{{ $kolomUrl('usia') }}"
              class="block px-4 py-2 hover:bg-gray-100 flex items-center gap-2">
             <p>Usia</p>
             <svg aria-hidden="true" fill="none" stroke-width="4" stroke="currentColor" viewBox="0 0 24 24" class="w-3 h-3 {{ $usia=='1' ? '' : 'hidden' }}">
@@ -185,7 +192,7 @@ if ($n == 0) {
         </li>
   
         <li>
-          <a href="/rekapTotal?Tahun={{ $Tahun }}&bagian={{ urlencode($bagian) }}&jenkel={{ $jenkel }}&usia={{ $usia }}&pekerjaan={{ $pekerjaan=='0'?'1':'0' }}&pendidikan={{ $pendidikan }}"
+          <a href="{{ $kolomUrl('pekerjaan') }}"
              class="block px-4 py-2 hover:bg-gray-100 flex items-center gap-2">
             <p>Pekerjaan</p>
             <svg aria-hidden="true" fill="none" stroke-width="4" stroke="currentColor" viewBox="0 0 24 24" class="w-3 h-3 {{ $pekerjaan=='1' ? '' : 'hidden' }}">
@@ -195,7 +202,7 @@ if ($n == 0) {
         </li>
   
         <li>
-          <a href="/rekapTotal?Tahun={{ $Tahun }}&bagian={{ urlencode($bagian) }}&jenkel={{ $jenkel }}&usia={{ $usia }}&pekerjaan={{ $pekerjaan }}&pendidikan={{ $pendidikan=='0'?'1':'0' }}"
+          <a href="{{ $kolomUrl('pendidikan') }}"
              class="block px-4 py-2 hover:bg-gray-100 flex items-center gap-2">
             <p>Pendidikan</p>
             <svg aria-hidden="true" fill="none" stroke-width="4" stroke="currentColor" viewBox="0 0 24 24" class="w-3 h-3 {{ $pendidikan=='1' ? '' : 'hidden' }}">
@@ -208,6 +215,30 @@ if ($n == 0) {
   </div>
 
   @include('partials.admin-filter', ['route' => '/rekapTotal'])
+
+  {{-- rentang tanggal survei (di dalam tahun terpilih) --}}
+  @php
+      [$tglAwal, $tglAkhir] = \App\Support\SurveyFilter::rentangTanggal();
+      $thn = \App\Support\SurveyFilter::year();
+  @endphp
+  <form method="GET" action="/rekapTotal" class="flex flex-row flex-wrap items-center gap-2" id="filterTanggal">
+      @foreach (request()->except(['tanggal_awal', 'tanggal_akhir', 'page']) as $k => $v)
+          @if (is_scalar($v))
+              <input type="hidden" name="{{ $k }}" value="{{ $v }}">
+          @endif
+      @endforeach
+      <label for="tanggal_awal" class="font-bold text-gray-900 text-sm">Tanggal</label>
+      <input type="date" id="tanggal_awal" name="tanggal_awal" value="{{ $tglAwal }}" min="{{ $thn }}-01-01" max="{{ $thn }}-12-31"
+          class="bg-white border border-gray-400 text-gray-900 font-bold text-sm rounded-full px-3 py-1" title="Tanggal awal">
+      <span class="text-sm font-bold text-gray-600">s/d</span>
+      <input type="date" id="tanggal_akhir" name="tanggal_akhir" value="{{ $tglAkhir }}" min="{{ $thn }}-01-01" max="{{ $thn }}-12-31"
+          class="bg-white border border-gray-400 text-gray-900 font-bold text-sm rounded-full px-3 py-1" title="Tanggal akhir">
+      <button type="submit" class="no-theme rounded-full bg-gray-900 text-white px-4 py-1 text-sm font-bold hover:bg-black">Cari</button>
+      @if ($tglAwal || $tglAkhir)
+          <a href="{{ url('/rekapTotal') . '?' . http_build_query(request()->except(['tanggal_awal', 'tanggal_akhir', 'page'])) }}"
+             class="js-admin-nav text-sm font-bold text-orange-700 hover:underline">Reset tanggal</a>
+      @endif
+  </form>
 
   {{-- penginput data --}}
   <div class="flex flex-row items-center gap-2">
@@ -223,7 +254,7 @@ if ($n == 0) {
   </div>
 
                         {{-- download (mengikuti filter Tahun + Pilar) --}}
-                        <a href="{{ route('exports.download', ['type' => 'resume', 'jenkel' => $_GET['jenkel'], 'usia' => $_GET['usia'], 'pekerjaan' => $_GET['pekerjaan'], 'pendidikan' => $_GET['pendidikan'], 'Tahun' => \App\Support\SurveyFilter::year()] + (\App\Support\SurveyFilter::isAllPilar() ? [] : ['bagian' => \App\Support\SurveyFilter::pilarCsv()])) }}"
+                        <a href="{{ route('exports.download', ['type' => 'resume', 'jenkel' => $_GET['jenkel'], 'usia' => $_GET['usia'], 'pekerjaan' => $_GET['pekerjaan'], 'pendidikan' => $_GET['pendidikan'], 'Tahun' => \App\Support\SurveyFilter::year()] + (\App\Support\SurveyFilter::isAllPilar() ? [] : ['bagian' => \App\Support\SurveyFilter::pilarCsv()]) + array_filter(['tanggal_awal' => \App\Support\SurveyFilter::rentangTanggal()[0], 'tanggal_akhir' => \App\Support\SurveyFilter::rentangTanggal()[1], 'perusahaan' => \App\Support\SurveyFilter::selectedPerusahaan()])) }}"
                             class="py-1 text-center items-center  bg-gradient-to-br from-[#EA580C] from-60%  to-[#FDBA74] to-95% rounded-full font-bold text-sm px-3  w-full  text-gray-900"
                             style="font-family:'Roboto'">
                             <p>DOWNLOAD</p>

@@ -86,10 +86,44 @@ class SurveyFilter
         return array_key_exists($kode, self::perusahaanOptions()) ? $kode : null;
     }
 
-    /** Terapkan filter Tahun + Pilar + Perusahaan ke query survey_responses. */
+    /**
+     * Rentang tanggal survei opsional (?tanggal_awal=YYYY-MM-DD&tanggal_akhir=YYYY-MM-DD),
+     * dipakai halaman Resume. Urutan terbalik ditukar otomatis.
+     *
+     * @return array{0: ?string, 1: ?string}
+     */
+    public static function rentangTanggal(): array
+    {
+        $parse = function ($v): ?string {
+            $v = trim((string) $v);
+            if (! preg_match('/^\d{4}-\d{2}-\d{2}$/', $v)) {
+                return null;
+            }
+            [$y, $m, $d] = array_map('intval', explode('-', $v));
+
+            return checkdate($m, $d, $y) ? $v : null;
+        };
+        $awal = $parse(request('tanggal_awal'));
+        $akhir = $parse(request('tanggal_akhir'));
+        if ($awal && $akhir && $awal > $akhir) {
+            [$awal, $akhir] = [$akhir, $awal];
+        }
+
+        return [$awal, $akhir];
+    }
+
+    /** Terapkan filter Tahun + Pilar + Perusahaan (+ rentang tanggal bila ada) ke query survey_responses. */
     public static function apply(Builder $query, string $table = 'survey_responses'): Builder
     {
         $query->where("{$table}.tahun", self::year());
+
+        [$awal, $akhir] = self::rentangTanggal();
+        if ($awal) {
+            $query->where("{$table}.created_at", '>=', $awal . ' 00:00:00');
+        }
+        if ($akhir) {
+            $query->where("{$table}.created_at", '<=', $akhir . ' 23:59:59');
+        }
 
         if (! self::isAllPilar()) {
             $query->whereIn("{$table}.jenisPelayanan", self::selectedPilar());

@@ -852,7 +852,50 @@ $arrowPrev = 'M12 2.25c-5.385 0-9.75 4.365-9.75 9.75s4.365 9.75 9.75 9.75 9.75-4
     #program > div:first-child, #rincian > div:first-child, #perusahaan > div:first-child { max-width: 1100px; }
     @media (max-width: 768px) {
         .survey-track a.step-nav { width: auto !important; flex: 1 1 0 !important; min-width: 0 !important; justify-content: center !important; font-size: 0.82rem !important; }
-        .ppm-scroll { max-height: calc(100dvh - 17rem); }
+    }
+
+    /* ── Responsif: isi kartu tidak boleh terpotong ──
+       Kartu tiap langkah tingginya dibatasi layar; bila isinya lebih panjang
+       (daftar desa, form identitas, pertanyaan) kartu bisa digulir. */
+    .survey-track > div[id] > div:first-child,
+    #awal > div:first-child {
+        overflow-y: auto !important;
+        overflow-x: hidden !important;
+        overscroll-behavior: contain;
+        -webkit-overflow-scrolling: touch;
+    }
+    /* Konten di tengah, tetapi bila lebih tinggi dari kartu mulai dari atas (tidak terpotong ke atas) */
+    .survey-track > div[id] > div.justify-center:first-child { justify-content: safe center !important; }
+    @media (max-width: 1024px) {
+        .survey-track > div[id] > div.justify-center:first-child { justify-content: flex-start !important; }
+    }
+    /* Popup selamat datang: bisa digulir di layar pendek */
+    #popup #modal { max-height: 100dvh; padding: 1rem 0; }
+
+    @media (max-width: 1024px) {
+        /* Satu area gulir saja (kartu), daftar di dalamnya tidak ikut punya scroll sendiri */
+        .ppm-scroll { max-height: none; overflow: visible; padding-right: 0; }
+        /* Tombol Sebelum/Lanjut tetap terlihat di bawah kartu */
+        .survey-track > div[id] > div:first-child .step-actions {
+            position: sticky;
+            bottom: -0.85rem;
+            z-index: 5;
+            background: rgba(255, 255, 255, 0.97);
+            padding-top: 0.5rem !important;
+            padding-bottom: 0.5rem !important;
+            box-shadow: 0 -8px 16px -12px rgba(146, 76, 0, 0.35);
+        }
+        /* Nama desa pendek: tetap 2 kolom di HP agar tidak terlalu panjang */
+        .survey-track #desaRadios { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
+        .survey-track #desaRadios label { padding: 0.6rem 0.7rem; }
+        .survey-track #desaRadios label div { font-size: 0.9rem !important; }
+    }
+
+    @media (max-width: 640px) {
+        #popup #modal > div { width: calc(100% - 1.5rem) !important; padding: 1.1rem !important; border-radius: 1.4rem !important; }
+        #popup table { border-spacing: 0 0.45rem; }
+        #popup td:last-child { line-height: 1.5; }
+        .ppm-banner { font-size: 13px; padding: 8px 10px; }
     }
 </style>
 
@@ -2176,8 +2219,15 @@ $arrowPrev = 'M12 2.25c-5.385 0-9.75 4.365-9.75 9.75s4.365 9.75 9.75 9.75 9.75-4
             });
         }
 
+        // Pindah langkah: kartu langkah baru selalu dimulai dari atas
+        function resetCardScroll() {
+            const card = document.querySelector((window.location.hash || '#awal') + ' > div');
+            if (card) card.scrollTop = 0;
+        }
+
         updateStepFromHash();
         window.addEventListener('hashchange', updateStepFromHash);
+        window.addEventListener('hashchange', resetCardScroll);
     });
 </script>
 

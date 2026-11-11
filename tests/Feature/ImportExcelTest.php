@@ -23,7 +23,19 @@ class ImportExcelTest extends TestCase
         parent::setUp();
         $this->withoutMiddleware(\App\Http\Middleware\VerifyCsrfToken::class);
         $this->withSession(['user_id' => 1, 'keterangan' => 'admin']);
+        config(['skm.import_excel' => true]); // fitur diuji walau disembunyikan secara default
         PpmCatalog::flush();
+    }
+
+    public function test_import_excel_disembunyikan_bila_dimatikan(): void
+    {
+        config(['skm.import_excel' => false]);
+
+        $this->get('/rekapTotal?Tahun=2026')->assertOk()->assertDontSee('IMPORT EXCEL');
+        foreach (['/admin/offline-skm', '/admin/offline-skm/format'] as $url) {
+            $this->get($url)->assertRedirect()->assertSessionHas('akses_ditolak');
+        }
+        $this->post('/admin/import-offline-skm', ['token' => 'x'])->assertRedirect()->assertSessionHas('akses_ditolak');
     }
 
     /** Unduh format, lalu isi baris data seperti admin mengisi di Excel. */
