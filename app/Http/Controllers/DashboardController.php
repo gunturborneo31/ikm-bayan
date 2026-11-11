@@ -104,6 +104,9 @@ class DashboardController extends Controller
         if (! $user || ! Hash::check($password, $user->password)) {
             return back()->withInput($request->only('username'))->withErrors(['username' => 'Username atau password salah.']);
         }
+        if (isset($user->is_active) && ! $user->is_active) {
+            return back()->withInput($request->only('username'))->withErrors(['username' => 'Akun ini sedang dinonaktifkan. Hubungi admin.']);
+        }
 
         $request->session()->regenerate();
 
@@ -111,6 +114,8 @@ class DashboardController extends Controller
         Session::put('user_id', $user->id);
         Session::put('username', $user->username);
         Session::put('keterangan', $user->keterangan ?? 'admin');
+        Session::put('nama', $user->name);
+        $user->forceFill(['last_login_at' => now()])->save();
 
         $role = $user->keterangan ?? 'admin';
 
@@ -121,7 +126,7 @@ class DashboardController extends Controller
 
     public function logout(Request $request)
     {
-        Session::forget(['user_id', 'username', 'keterangan']);
+        Session::forget(['user_id', 'username', 'keterangan', 'nama']);
         $request->session()->invalidate();
         $request->session()->regenerateToken();
 

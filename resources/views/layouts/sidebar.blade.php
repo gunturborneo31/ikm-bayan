@@ -38,10 +38,12 @@
                 class="js-admin-nav block rounded-xl px-3 py-2.5 transition {{ str_contains($i, 'dashboard') ? 'bg-white text-orange-900 shadow-md' : 'text-white hover:bg-orange-100/20' }}">
                 DASHBOARD
             </a>
-            <a href="/master-ppm"
-                class="js-admin-nav block rounded-xl px-3 py-2.5 transition {{ str_contains($i, 'master-ppm') ? 'bg-white text-orange-900 shadow-md' : 'text-white hover:bg-orange-100/20' }}">
-                MASTER DATA PPM
-            </a>
+            @if (\App\Support\Akses::isAdmin())
+                <a href="/master-ppm"
+                    class="js-admin-nav block rounded-xl px-3 py-2.5 transition {{ str_contains($i, 'master-ppm') ? 'bg-white text-orange-900 shadow-md' : 'text-white hover:bg-orange-100/20' }}">
+                    MASTER DATA PPM
+                </a>
+            @endif
 
             <a href="/admin/input-responden" class="block rounded-xl px-3 py-2.5 transition text-white hover:bg-orange-100/20">
                 INPUT RESPONDEN
@@ -50,9 +52,19 @@
             <a href="/admin/offline-skm" class="js-admin-nav block rounded-xl px-3 py-2.5 transition {{ str_contains($i, 'offline-skm') ? 'bg-white text-orange-900 shadow-md' : 'text-white hover:bg-orange-100/20' }}">
                 IMPORT EXCEL
             </a>
+
+            @if (\App\Support\Akses::isAdmin())
+                <a href="/akun" class="js-admin-nav block rounded-xl px-3 py-2.5 transition {{ str_contains($i, 'akun') ? 'bg-white text-orange-900 shadow-md' : 'text-white hover:bg-orange-100/20' }}">
+                    AKUN PENGGUNA
+                </a>
+            @endif
         </nav>
 
         <div class="space-y-2 hidden lg:block">
+            <div class="rounded-xl bg-orange-950/25 px-3 py-2 text-white">
+                <p class="text-[11px] font-black truncate" title="{{ session('nama') }}">{{ session('nama', session('username')) }}</p>
+                <p class="text-[10px] font-semibold text-white/80">{{ \App\Support\Akses::roleLabel(session('keterangan')) }}</p>
+            </div>
             <a href="/" class="js-admin-nav block w-full rounded-xl bg-white/90 text-orange-800 text-center px-3 py-2.5 text-[11px] font-black hover:bg-white transition">
                 HALAMAN DEPAN
             </a>

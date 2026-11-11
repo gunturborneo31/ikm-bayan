@@ -30,7 +30,7 @@
             <div class="rounded-xl border border-orange-100 bg-orange-50/60 p-4">
                 <p class="text-xs font-black text-orange-700 tracking-wide">LANGKAH 1</p>
                 <h3 class="font-bold text-gray-900">Download format Excel</h3>
-                <p class="text-sm text-gray-600 mt-1">Sudah berisi pilihan dropdown (pilar, jenis kelamin, usia, pendidikan, pekerjaan, nilai 1–4) dan sheet petunjuk.</p>
+                <p class="text-sm text-gray-600 mt-1">Kolomnya sama dengan form Input Responden: desa, rincian program (hanya yang berjalan di desa itu), perusahaan / "Tidak tahu", jenis responden, identitas, dan nilai 1–4. Dilengkapi sheet petunjuk dan daftar program per desa.</p>
                 <a href="{{ route('admin.offline-skm.template') }}" class="inline-flex items-center gap-2 mt-3 px-4 py-2 rounded-lg bg-orange-600 text-white font-bold text-sm hover:bg-orange-700">
                     <span class="material-symbols-outlined text-lg">download</span> Download Format (.xlsx)
                 </a>
@@ -94,7 +94,7 @@
                         @foreach ($statusInfo as [$label, , $desc])
                             <li><b>{{ $label }}</b>: {{ $desc }}</li>
                         @endforeach
-                        <li>Duplikat ditentukan dari nama, no. HP, tanggal survei, dan pilar yang sama.</li>
+                        <li>Duplikat ditentukan dari nama, no. HP, tanggal survei, dan rincian program yang sama. Perusahaan yang dinilai mengikuti aturan survei (Beasiswa &amp; 4 program Kesehatan selalu BAYAN; "Tidak tahu" = satu-satunya pelaksana atau BAYAN).</li>
                     </ul>
                 </details>
 
@@ -113,7 +113,9 @@
                                     <th class="px-3 py-2">Baris</th>
                                     <th class="px-3 py-2">Nama</th>
                                     <th class="px-3 py-2">Tanggal</th>
-                                    <th class="px-3 py-2">Pilar</th>
+                                    <th class="px-3 py-2">Desa</th>
+                                    <th class="px-3 py-2">Rincian Program</th>
+                                    <th class="px-3 py-2">Perusahaan Dinilai</th>
                                     <th class="px-3 py-2">Status</th>
                                     <th class="px-3 py-2 min-w-[240px]">Keterangan</th>
                                 </tr>
@@ -135,7 +137,9 @@
                                             @if ($row['display']['nohp'])<div class="text-xs font-normal text-gray-500">{{ $row['display']['nohp'] }}</div>@endif
                                         </td>
                                         <td class="px-3 py-2 whitespace-nowrap">{{ $row['display']['tanggal'] ?: '—' }}</td>
-                                        <td class="px-3 py-2">{{ \Illuminate\Support\Str::limit($row['display']['pilar'], 32) ?: '—' }}</td>
+                                        <td class="px-3 py-2 whitespace-nowrap">{{ $row['display']['desa'] ?? '' ?: '—' }}</td>
+                                        <td class="px-3 py-2">{{ \Illuminate\Support\Str::limit($row['display']['rincian'] ?? '', 48) ?: '—' }}</td>
+                                        <td class="px-3 py-2 whitespace-nowrap">{{ $row['display']['perusahaan'] ?? '' ?: '—' }}</td>
                                         <td class="px-3 py-2"><span class="inline-block whitespace-nowrap px-2 py-0.5 rounded-full border text-[11px] font-bold {{ $cls }}">{{ $label }}</span></td>
                                         <td class="px-3 py-2 text-xs">{{ implode('; ', $row['notes']) ?: '—' }}</td>
                                     </tr>

@@ -79,6 +79,13 @@
         .item .btns button { padding: 6px 12px; font-size: 13px; }
         .empty { text-align: center; color: var(--muted); font-size: 13px; padding: 18px 0; }
         .hint { font-size: 12px; color: var(--muted); margin-top: 8px; }
+        .block { border-top: 1px solid #fde4cc; padding-top: 12px; margin-top: 12px; }
+        .block:first-of-type { border-top: 0; padding-top: 0; margin-top: 0; }
+        .block-title { font-size: 13px; font-weight: 800; color: var(--orange); margin-bottom: 8px; }
+        .sub { font-weight: 400; color: var(--muted); font-size: 12px; }
+        .qq { font-size: 12px; color: var(--muted); margin: -2px 0 6px; }
+        optgroup { font-weight: 700; }
+        select:disabled { background: #f9fafb; color: var(--muted); }
         @media (max-width: 520px) { .grid { grid-template-columns: 1fr; } }
     </style>
 </head>
@@ -100,18 +107,57 @@
         <h2>Form Responden</h2>
         <div id="editingNote" class="editing" hidden></div>
         <form id="form" novalidate>
+            <input type="hidden" id="responden_uuid" name="responden_uuid">
+        <div class="block">
+            <div class="block-title">1. Program yang dinilai</div>
             <div class="grid">
                 <div>
                     <label class="f" for="tanggal">Tanggal survei</label>
                     <input type="date" id="tanggal" name="tanggal" required>
                 </div>
                 <div>
-                    <label class="f" for="bagian">Pilar / Program</label>
-                    <select id="bagian" name="bagian" required>
-                        @foreach ($bagianOptions as $code => $name)
-                            <option value="{{ $code }}">{{ $name }}</option>
+                    <label class="f" for="desa_id">Desa</label>
+                    <select id="desa_id" name="desa_id" required>
+                        <option value="">— Pilih desa —</option>
+                        @foreach ($catalog['desa'] as $id => $nama)
+                            <option value="{{ $id }}">{{ $nama }}</option>
                         @endforeach
                     </select>
+                </div>
+                <div class="full">
+                    <label class="f" for="program_id">Program <span class="sub">(hanya program yang berjalan di desa terpilih)</span></label>
+                    <select id="program_id" name="program_id" required disabled>
+                        <option value="">— Pilih desa dulu —</option>
+                    </select>
+                </div>
+                <div class="full">
+                    <label class="f" for="rincian_id">Rincian program</label>
+                    <select id="rincian_id" name="rincian_id" required disabled>
+                        <option value="">— Pilih program dulu —</option>
+                    </select>
+                </div>
+                <div class="full">
+                    <span class="f">Menurut responden, perusahaan yang melaksanakan</span>
+                    <div class="chips" id="perusahaanChips" data-q="perusahaan_jawaban">
+                        <span class="sub">Pilih rincian program dulu.</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="block">
+            <div class="block-title">2. Identitas responden
+                <span class="sub" id="samaNote" hidden>· melanjutkan responden yang sama</span>
+            </div>
+            <div class="grid">
+                <div class="full">
+                    <span class="f">Jenis responden</span>
+                    <div class="chips" data-q="jenis_responden">
+                        @foreach ($jenisRespondenOptions as $i => $opt)
+                            <input type="radio" id="jr{{ $i }}" name="jenis_responden" value="{{ $opt }}">
+                            <label for="jr{{ $i }}">{{ $opt }}</label>
+                        @endforeach
+                    </div>
                 </div>
                 <div>
                     <label class="f" for="nama">Nama</label>
@@ -122,7 +168,7 @@
                     <input type="tel" id="nohp" name="nohp" maxlength="16" inputmode="numeric" autocomplete="off">
                 </div>
                 <div class="full">
-                    <label class="f" for="alamat">Alamat / Desa</label>
+                    <label class="f" for="alamat">Alamat <span class="sub">(RT / dusun; desa sudah dari pilihan di atas)</span></label>
                     <input type="text" id="alamat" name="alamat" maxlength="300" autocomplete="off">
                 </div>
                 <div class="full">
@@ -159,12 +205,14 @@
                     </select>
                 </div>
             </div>
+        </div>
 
-            <div style="margin-top:14px">
-                <span class="f">Penilaian (pilih satu jawaban per unsur)</span>
+            <div class="block">
+                <div class="block-title">3. Penilaian (pilih satu jawaban per unsur)</div>
                 @foreach ($unsur as $no => [$judul, $jawaban])
                     <div class="q" data-q="u{{ $no }}">
                         <div class="t">{{ $no }}. {{ $judul }}</div>
+                        <div class="qq">{{ \App\Support\SurveyOptions::PERTANYAAN[$no] ?? '' }}</div>
                         <div class="chips">
                             @foreach ($jawaban as $idx => $teks)
                                 <input type="radio" id="u{{ $no }}-{{ $idx + 1 }}" name="u{{ $no }}" value="{{ $idx + 1 }}">
@@ -181,7 +229,8 @@
             </div>
 
             <div class="actions">
-                <button type="submit" class="btn-main" id="submitBtn">Simpan</button>
+                <button type="submit" class="btn-main" id="submitBtn" data-next="baru">Simpan</button>
+                <button type="submit" class="btn-light" id="submitLagi" data-next="lagi" title="Identitas & desa tetap, tinggal pilih program lain">Simpan &amp; nilai program lain</button>
                 <button type="button" class="btn-light" id="cancelEdit" hidden>Batal ubah</button>
             </div>
             <div id="flash" class="flash" hidden></div>
@@ -202,7 +251,10 @@
 (() => {
     const API = '/admin/responden';
     const UNSUR = 9;
-    const BAGIAN = @json($bagianOptions);
+    // Master PPM disisipkan di halaman agar pilihan tetap tersedia saat offline
+    const PPM = @json($catalog);
+    const TIDAK_TAHU = @json($tidakTahu);
+    const IDENTITAS = ['nama', 'nohp', 'alamat', 'jenkel', 'usia', 'pendidikan', 'pekerjaan', 'jenis_responden'];
     let csrf = document.querySelector('meta[name=csrf-token]').content;
 
     // ---------- IndexedDB (data kept on the device) ----------
@@ -248,10 +300,64 @@
     let lastSync = null;
     let editingKey = null;
 
+    // ---------- Pilihan berjenjang: desa -> program -> rincian -> perusahaan ----------
+    const desaSel = $('desa_id'), programSel = $('program_id'), rincianSel = $('rincian_id'), chipsEl = $('perusahaanChips');
+    const opt = (value, label) => `<option value="${esc(value)}">${esc(label)}</option>`;
+    const pelaksana = (rid, desaId) => (PPM.rincian[rid]?.pelaksana || {})[desaId] || [];
+    const rincianDiDesa = (desaId) => Object.keys(PPM.rincian).filter((rid) => pelaksana(rid, desaId).length);
+
+    function isiProgram() {
+        const desaId = desaSel.value;
+        const programIds = new Set(rincianDiDesa(desaId).map((rid) => PPM.rincian[rid].program));
+        let html = '<option value="">— Pilih program —</option>';
+        let pilarAktif = null;
+        for (const [pid, p] of Object.entries(PPM.program)) {
+            if (!programIds.has(pid)) continue;
+            if (p.pilar !== pilarAktif) {
+                if (pilarAktif !== null) html += '</optgroup>';
+                html += `<optgroup label="${esc(PPM.pilar[p.pilar] || p.pilar)}">`;
+                pilarAktif = p.pilar;
+            }
+            html += opt(pid, p.nama);
+        }
+        if (pilarAktif !== null) html += '</optgroup>';
+        programSel.innerHTML = desaId ? (programIds.size ? html : '<option value="">Belum ada program di desa ini</option>') : '<option value="">— Pilih desa dulu —</option>';
+        programSel.disabled = !desaId || !programIds.size;
+        isiRincian();
+    }
+
+    function isiRincian() {
+        const desaId = desaSel.value, pid = programSel.value;
+        const ids = pid ? rincianDiDesa(desaId).filter((rid) => PPM.rincian[rid].program === pid) : [];
+        rincianSel.innerHTML = pid
+            ? (ids.length === 1 ? '' : '<option value="">— Pilih rincian —</option>') + ids.map((rid) => opt(rid, PPM.rincian[rid].nama)).join('')
+            : '<option value="">— Pilih program dulu —</option>';
+        rincianSel.disabled = !pid;
+        isiPerusahaan();
+    }
+
+    function isiPerusahaan() {
+        const kodes = rincianSel.value ? pelaksana(rincianSel.value, desaSel.value) : [];
+        if (!kodes.length) {
+            chipsEl.innerHTML = '<span class="sub">Pilih rincian program dulu.</span>';
+            return;
+        }
+        chipsEl.innerHTML = [...kodes, TIDAK_TAHU].map((k, i) => `
+            <input type="radio" id="pj${i}" name="perusahaan_jawaban" value="${esc(k)}">
+            <label for="pj${i}">${esc(k === TIDAK_TAHU ? 'Tidak tahu' : (PPM.perusahaan[k] ? k + ' · ' + PPM.perusahaan[k] : k))}</label>`).join('');
+    }
+
+    desaSel.addEventListener('change', isiProgram);
+    programSel.addEventListener('change', isiRincian);
+    rincianSel.addEventListener('change', isiPerusahaan);
+
     // ---------- Form ----------
     const resetForm = () => {
         form.reset();
         $('tanggal').value = today();
+        $('responden_uuid').value = '';
+        $('samaNote').hidden = true;
+        isiProgram();
         editingKey = null;
         $('editingNote').hidden = true;
         $('cancelEdit').hidden = true;
@@ -260,28 +366,41 @@
     const readForm = () => {
         const fd = new FormData(form);
         const data = {};
-        for (const k of ['tanggal', 'bagian', 'nama', 'nohp', 'alamat', 'jenkel', 'usia', 'pendidikan', 'pekerjaan', 'saran']) {
+        for (const k of ['tanggal', 'desa_id', 'program_id', 'rincian_id', 'perusahaan_jawaban', 'responden_uuid', ...IDENTITAS, 'saran']) {
             data[k] = (fd.get(k) ?? '').toString().trim();
         }
         data.usia = Number(data.usia);
+        data.desa_id = data.desa_id ? Number(data.desa_id) : null;
         for (let i = 1; i <= UNSUR; i++) data['u' + i] = fd.get('u' + i) ? Number(fd.get('u' + i)) : null;
         return data;
     };
+    const setValue = (k, v) => {
+        const els = form.elements[k];
+        if (!els) return;
+        if (els instanceof RadioNodeList) {
+            for (const el of els) el.checked = String(el.value) === String(v);
+        } else {
+            els.value = v ?? '';
+        }
+    };
     const fillForm = (data) => {
         form.reset();
+        // Pilihan berjenjang diisi berurutan supaya opsinya tersedia
+        setValue('desa_id', data.desa_id); isiProgram();
+        setValue('program_id', data.program_id || PPM.rincian[data.rincian_id]?.program); isiRincian();
+        setValue('rincian_id', data.rincian_id); isiPerusahaan();
         for (const [k, v] of Object.entries(data)) {
-            const els = form.elements[k];
-            if (!els) continue;
-            if (els instanceof RadioNodeList) {
-                for (const el of els) el.checked = String(el.value) === String(v);
-            } else {
-                els.value = v ?? '';
-            }
+            if (!['desa_id', 'program_id', 'rincian_id'].includes(k)) setValue(k, v);
         }
     };
     const checkForm = (data) => {
         if (!data.tanggal) return ['tanggal', 'Tanggal survei wajib diisi.'];
         if (data.tanggal > today()) return ['tanggal', 'Tanggal survei tidak boleh melebihi hari ini.'];
+        if (!data.desa_id) return ['desa_id', 'Desa wajib dipilih.'];
+        if (!data.program_id) return ['program_id', 'Program wajib dipilih.'];
+        if (!data.rincian_id) return ['rincian_id', 'Rincian program wajib dipilih.'];
+        if (!data.perusahaan_jawaban) return ['perusahaan_jawaban', 'Pilih perusahaan pelaksana, atau "Tidak tahu".'];
+        if (!data.jenis_responden) return ['jenis_responden', 'Jenis responden wajib dipilih.'];
         if (!data.nama) return ['nama', 'Nama wajib diisi.'];
         for (let i = 1; i <= UNSUR; i++) {
             if (!data['u' + i]) return ['u' + i, 'Unsur ' + i + ' belum dipilih.'];
@@ -296,7 +415,10 @@
 
     form.addEventListener('submit', async (e) => {
         e.preventDefault();
+        const lanjut = e.submitter?.dataset.next === 'lagi';
         const data = readForm();
+        // Satu responden = satu responden_uuid, dipakai bersama bila menilai program lain
+        if (!data.responden_uuid) data.responden_uuid = uuid();
         const problem = checkForm(data);
         if (problem) {
             flash(problem[1], 'warn');
@@ -321,11 +443,23 @@
 
         const wasEdit = !!editingKey;
         resetForm();
+        if (lanjut) {
+            // Responden yang sama menilai program lain: identitas, desa & tanggal tetap
+            const keep = { tanggal: data.tanggal, desa_id: data.desa_id, responden_uuid: data.responden_uuid };
+            for (const k of IDENTITAS) keep[k] = data[k];
+            fillForm(keep);
+            $('samaNote').hidden = false;
+        }
         await render();
         flash(online && !sessionExpired
             ? (wasEdit ? 'Perubahan disimpan, sedang dikirim ke sistem…' : 'Data disimpan, sedang dikirim ke sistem…')
             : 'Data disimpan di perangkat ini. Akan dikirim otomatis saat internet tersedia.', online && !sessionExpired ? 'ok' : 'warn');
-        window.scrollTo({ top: 0, behavior: 'smooth' });
+        if (lanjut) {
+            flash('Tersimpan. Identitas ' + (data.nama || '') + ' tetap, silakan pilih program lain.', online && !sessionExpired ? 'ok' : 'warn');
+            programSel.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        } else {
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
         sync();
     });
     $('cancelEdit').addEventListener('click', resetForm);
@@ -334,6 +468,11 @@
     const avg = (d) => {
         const vals = Array.from({ length: UNSUR }, (_, i) => Number(d['u' + (i + 1)]) || 0).filter(Boolean);
         return vals.length ? (vals.reduce((a, b) => a + b, 0) / vals.length).toFixed(2) : '-';
+    };
+    const perusahaanText = (d) => {
+        if (d.perusahaan_dinilai) return ' · Dinilai: ' + esc(d.perusahaan_dinilai);
+        if (d.perusahaan_jawaban) return ' · Jawaban: ' + esc(d.perusahaan_jawaban === TIDAK_TAHU ? 'Tidak tahu' : d.perusahaan_jawaban);
+        return '';
     };
     const fmtDate = (s) => s ? new Date(s + 'T00:00:00').toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' }) : '-';
     const badge = (rec) => {
@@ -362,7 +501,8 @@
                 <div class="row1">
                     <div>
                         <div class="name">${esc(r.data.nama || '(tanpa nama)')}</div>
-                        <div class="meta">${fmtDate(r.data.tanggal)} · ${esc(BAGIAN[r.data.bagian] || r.data.bagian || 'Tanpa pilar')} · Rata-rata ${avg(r.data)}</div>
+                        <div class="meta">${fmtDate(r.data.tanggal)} · ${esc(PPM.desa[r.data.desa_id] || 'Tanpa desa')} · Rata-rata ${avg(r.data)}${r.data.penginput ? ' · Input: ' + esc(r.data.penginput) : ''}</div>
+                        <div class="meta">${esc(PPM.rincian[r.data.rincian_id]?.nama || (r.data.rincian_id ? r.data.rincian_id : 'Data lama: belum ada program — klik Ubah untuk melengkapi'))}${perusahaanText(r.data)}</div>
                     </div>
                     ${badge(r)}
                 </div>

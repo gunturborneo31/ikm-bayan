@@ -4,29 +4,40 @@ namespace App\Http\Controllers;
 
 use App\Models\NilaiUnsur;
 use App\Support\BagianOptions;
+use App\Support\PpmCatalog;
 use App\Support\SurveyOptions;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 
 /**
  * Admin page for entering respondent data by hand.
  * The page works offline: it keeps entries on the device and sends them
  * to the JSON endpoints below once the connection is back.
+ *
+ * Alurnya sama dengan survei publik: desa -> program -> rincian -> perusahaan
+ * pelaksana (atau "Tidak tahu") -> identitas -> 9 unsur. Perusahaan yang dinilai
+ * ditentukan dengan aturan yang sama (PpmCatalog::attribute).
  */
 class AdminRespondenController extends Controller
 {
     private const LIST_LIMIT = 200;
 
+    private const IDENTITAS = ['nama', 'nohp', 'alamat', 'jenkel', 'usia', 'pendidikan', 'pekerjaan', 'jenis_responden', 'saran'];
+
     public function page()
     {
         return view('admin.input-responden', [
-            'bagianOptions' => $this->allowedBagian(),
+            'catalog' => $this->allowedCatalog(),
+            'tidakTahu' => PpmCatalog::TIDAK_TAHU,
             'jenkelOptions' => SurveyOptions::JENKEL,
             'usiaOptions' => SurveyOptions::USIA,
             'pendidikanOptions' => SurveyOptions::PENDIDIKAN,
             'pekerjaanOptions' => SurveyOptions::PEKERJAAN,
+            'jenisRespondenOptions' => SurveyOptions::JENIS_RESPONDEN,
         ]);
     }
 
@@ -98,10 +109,16 @@ class AdminRespondenController extends Controller
 
     private function validated(Request $request): array
     {
+        $catalog = $this->allowedCatalog();
+
         $rules = [
             'client_uuid' => ['nullable', 'string', 'max:36'],
+            'responden_uuid' => ['nullable', 'string', 'max:36'],
             'tanggal' => ['required', 'date', 'before_or_equal:today'],
-            'bagian' => ['required', Rule::in(array_keys($this->allowedBagian()))],
+            'desa_id' => ['required', 'integer', Rule::in(array_keys($catalog['desa']))],
+            'rincian_id' => ['required', 'string', Rule::in(array_keys($catalog['rincian']))],
+            'perusahaan_jawaban' => ['required', 'string', 'max:12'],
+            'jenis_responden' => ['required', Rule::in(SurveyOptions::JENIS_RESPONDEN)],
             'nama' => ['required', 'string', 'max:150'],
             'nohp' => ['nullable', 'string', 'max:16'],
             'alamat' => ['nullable', 'string', 'max:300'],
@@ -115,12 +132,16 @@ class AdminRespondenController extends Controller
             $rules["u{$i}"] = ['required', 'integer', 'between:1,4'];
         }
 
-        $attributes = ['tanggal' => 'Tanggal survei', 'bagian' => 'Pilar', 'nohp' => 'No. HP', 'jenkel' => 'Jenis kelamin'];
+        $attributes = [
+            'tanggal' => 'Tanggal survei', 'desa_id' => 'Desa', 'rincian_id' => 'Rincian program',
+            'perusahaan_jawaban' => 'Perusahaan pelaksana', 'jenis_responden' => 'Jenis responden',
+            'nohp' => 'No. HP', 'jenkel' => 'Jenis kelamin',
+        ];
         foreach (range(1, 9) as $i) {
             $attributes["u{$i}"] = "Unsur {$i}";
         }
 
-        return $request->validate($rules, [
+        $data = $request->validate($rules, [
             'required' => ':attribute wajib diisi.',
             'tanggal.before_or_equal' => 'Tanggal survei tidak boleh melebihi hari ini.',
             'date' => ':attribute bukan tanggal yang valid.',
@@ -129,6 +150,16 @@ class AdminRespondenController extends Controller
             'integer' => ':attribute harus berupa angka.',
             'max' => ':attribute terlalu panjang.',
         ], $attributes);
+
+        // Perusahaan harus pelaksana rincian ini di desa tersebut (atau "Tidak tahu")
+        $atribusi = PpmCatalog::attribute($data['rincian_id'], (int) $data['desa_id'], $data['perusahaan_jawaban']);
+        if ($atribusi === null) {
+            throw ValidationException::withMessages([
+                'perusahaan_jawaban' => 'Perusahaan pelaksana tidak sesuai dengan program di desa ini.',
+            ]);
+        }
+
+        return $data + $atribusi;
     }
 
     private function fill(NilaiUnsur $record, array $data): void
@@ -138,9 +169,29 @@ class AdminRespondenController extends Controller
         $time = $record->created_at ? Carbon::parse($record->created_at) : now();
         $record->created_at = $date->setTime($time->hour, $time->minute, $time->second);
         $record->tahun = (int) $date->format('Y');
-        $record->jenisPelayanan = $data['bagian'];
 
-        foreach (['nama', 'nohp', 'alamat', 'jenkel', 'usia', 'pendidikan', 'pekerjaan', 'saran'] as $field) {
+        $programId = PpmCatalog::rincian()[$data['rincian_id']]['program_id'];
+        $pilarId = PpmCatalog::program()[$programId]['pilar_id'];
+
+        $record->desa_id = (int) $data['desa_id'];
+        $record->pilar_id = $pilarId;
+        $record->program_id = $programId;
+        $record->rincian_id = $data['rincian_id'];
+        $record->jenisPelayanan = PpmCatalog::pilar()[$pilarId]['kode'] ?? null;
+        $record->perusahaan_jawaban = $data['perusahaan_jawaban'];
+        $record->perusahaan_dinilai = $data['perusahaan_dinilai'];
+        $record->sumber_atribusi = $data['sumber_atribusi'];
+        $record->perusahaan_opsi = $data['perusahaan_opsi'];
+        // Responden yang sama (nilai program lain) berbagi responden_uuid
+        $record->responden_uuid = $data['responden_uuid'] ?? $record->responden_uuid ?? (string) Str::uuid();
+
+        // Penginput dicatat saat data dibuat; mengubah data tidak mengganti penginput aslinya
+        if (! $record->exists) {
+            $record->input_oleh = \App\Support\Akses::userId();
+            $record->sumber_input = 'input_admin';
+        }
+
+        foreach (self::IDENTITAS as $field) {
             $record->{$field} = $data[$field] ?? null;
         }
         foreach (range(1, 9) as $i) {
@@ -153,11 +204,17 @@ class AdminRespondenController extends Controller
         $out = [
             'id' => $row->id,
             'client_uuid' => $row->client_uuid,
+            'responden_uuid' => $row->responden_uuid,
             'tanggal' => $row->created_at ? Carbon::parse($row->created_at)->format('Y-m-d') : null,
-            'bagian' => $row->jenisPelayanan,
+            'desa_id' => $row->desa_id,
+            'program_id' => $row->program_id,
+            'rincian_id' => $row->rincian_id,
+            'perusahaan_jawaban' => $row->perusahaan_jawaban,
+            'perusahaan_dinilai' => $row->perusahaan_dinilai,
+            'penginput' => \App\Support\Akses::penginputLabel($row->input_oleh, $row->sumber_input),
             'updated_at' => $row->updated_at ? Carbon::parse($row->updated_at)->toIso8601String() : null,
         ];
-        foreach (['nama', 'nohp', 'alamat', 'jenkel', 'usia', 'pendidikan', 'pekerjaan', 'saran'] as $field) {
+        foreach (self::IDENTITAS as $field) {
             $out[$field] = $row->{$field};
         }
         foreach (range(1, 9) as $i) {
@@ -167,22 +224,26 @@ class AdminRespondenController extends Controller
         return $out;
     }
 
-    /** Bagian (pilar) this admin may use, based on the role saved at login. */
-    private function allowedBagian(): array
+    /** Kode pilar yang boleh diinput admin ini, berdasarkan role saat login. */
+    private function allowedPilarCodes(): array
     {
-        $codes = BagianOptions::codesForRole(session('keterangan', 'admin'));
+        return BagianOptions::codesForRole(session('keterangan', 'admin'));
+    }
 
-        return array_intersect_key(BagianOptions::codeNameMap(), array_flip($codes));
+    /** Katalog survei (desa, program, rincian, perusahaan) yang dibatasi pilar milik admin. */
+    private function allowedCatalog(): array
+    {
+        return PpmCatalog::forRole(session('keterangan', 'admin'));
     }
 
     /**
-     * Full admins see every record (older entries may have no bagian);
-     * role-limited admins only see their own bagian.
+     * Full admins see every record (older entries may have no pilar);
+     * role-limited admins only see their own pilar.
      */
     private function scopedQuery()
     {
         $query = NilaiUnsur::query();
-        $allowed = array_keys($this->allowedBagian());
+        $allowed = $this->allowedPilarCodes();
 
         if (count($allowed) < count(BagianOptions::codes())) {
             $query->whereIn('jenisPelayanan', $allowed);

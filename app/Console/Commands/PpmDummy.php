@@ -156,6 +156,7 @@ class PpmDummy extends Command
                         'program_id' => $programId,
                         'rincian_id' => $rid,
                         'perusahaan_jawaban' => $jawaban,
+                        'sumber_input' => 'dummy',
                         'saran' => mt_rand(1, 100) <= 55 ? self::SARAN[array_rand(self::SARAN)] : null,
                         'created_at' => $waktu->toDateTimeString(),
                         'updated_at' => $waktu->toDateTimeString(),

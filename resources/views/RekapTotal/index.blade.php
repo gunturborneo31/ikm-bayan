@@ -209,6 +209,19 @@ if ($n == 0) {
 
   @include('partials.admin-filter', ['route' => '/rekapTotal'])
 
+  {{-- penginput data --}}
+  <div class="flex flex-row items-center gap-2">
+      <label for="filterPenginput" class="font-bold text-gray-900 text-sm">Penginput</label>
+      <select id="filterPenginput" class="bg-white border border-gray-400 text-gray-900 font-bold text-sm rounded-full px-3 py-1"
+          onchange="const u = new URL(location.href); this.value ? u.searchParams.set('penginput', this.value) : u.searchParams.delete('penginput'); u.searchParams.delete('page'); location.href = u.toString();">
+          <option value="">Semua</option>
+          <option value="survei" @selected($penginput === 'survei')>Survei online (responden)</option>
+          @foreach ($akunOptions as $id => $nama)
+              <option value="{{ $id }}" @selected($penginput === (string) $id)>{{ $nama }}</option>
+          @endforeach
+      </select>
+  </div>
+
                         {{-- download (mengikuti filter Tahun + Pilar) --}}
                         <a href="{{ route('exports.download', ['type' => 'resume', 'jenkel' => $_GET['jenkel'], 'usia' => $_GET['usia'], 'pekerjaan' => $_GET['pekerjaan'], 'pendidikan' => $_GET['pendidikan'], 'Tahun' => \App\Support\SurveyFilter::year()] + (\App\Support\SurveyFilter::isAllPilar() ? [] : ['bagian' => \App\Support\SurveyFilter::pilarCsv()])) }}"
                             class="py-1 text-center items-center  bg-gradient-to-br from-[#EA580C] from-60%  to-[#FDBA74] to-95% rounded-full font-bold text-sm px-3  w-full  text-gray-900"
@@ -262,6 +275,9 @@ if ($n == 0) {
                                         <th scope="col" rowspan="2"
                                             class="px-6 py-3 w-[50px] text-center text-xs font-medium text-gray-900 uppercase">
                                             PERUSAHAAN<br>DINILAI</th>
+                                        <th scope="col" rowspan="2"
+                                            class="px-6 py-3 min-w-[130px] text-center text-xs font-medium text-gray-900 uppercase">
+                                            DIINPUT<br>OLEH</th>
                                         {{-- <th scope="col" rowspan="2"
                                             class="px-6 py-3 w-[50px] text-center text-xs font-medium text-gray-900 uppercase {{ $_GET['pendidikan'] == 0 ? 'hidden' : '' }}">
                                             JENIS PELAYANAN</th> --}}
@@ -355,6 +371,9 @@ if ($n == 0) {
                                                         <span class="block text-[10px] text-gray-500">jawab: tidak tahu</span>
                                                     @endif
                                                 </td>
+                                                <td class="text-center px-2 font-normal text-xs">
+                                                    {{ \App\Support\Akses::penginputLabel($data->input_oleh, $data->sumber_input) }}
+                                                </td>
                                                 {{-- <td
                                                     class="text-center px-2 font-normal text-xs {{ $_GET['usia'] == 0 ? 'hidden' : '' }}">
                                                     {{ $data->sub_jenis_jenis }}
@@ -423,8 +442,8 @@ if ($n == 0) {
                                     </tbody>
                                     <tfoot class="bg-gradient-to-br from-[#EA580C] h-[50px] from-60%  to-[#FDBA74] to-95% text-gray-900">
                                         @php
-                                            // Kolom sebelum U1: No, Nama, Desa, Pilar, Rincian, Perusahaan + kolom demografi yang tampil
-                                            $kolomDepan = 6 + collect(['jenkel', 'usia', 'pekerjaan', 'pendidikan'])->filter(fn ($k) => ($_GET[$k] ?? '1') != 0)->count();
+                                            // Kolom sebelum U1: No, Nama, Desa, Pilar, Rincian, Perusahaan, Penginput + kolom demografi yang tampil
+                                            $kolomDepan = 7 + collect(['jenkel', 'usia', 'pekerjaan', 'pendidikan'])->filter(fn ($k) => ($_GET[$k] ?? '1') != 0)->count();
                                         @endphp
                                         <tr>
                                             <td colspan="{{ $kolomDepan }}" class="text-center px-2 font-bold text-xs">

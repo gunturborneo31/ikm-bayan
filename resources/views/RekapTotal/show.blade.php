@@ -34,7 +34,7 @@
                 <h2 class="text-xl font-extrabold text-gray-900 mt-1">{{ $tampil($data->nama) }}</h2>
                 <p class="text-sm text-gray-600">
                     Diisi {{ $data->created_at ? \Carbon\Carbon::parse($data->created_at)->locale('id')->translatedFormat('d F Y, H:i') : '-' }}
-                    @if ($data->client_uuid) · input admin/offline @endif
+                    · Diinput oleh <b>{{ \App\Support\Akses::penginputLabel($data->input_oleh, $data->sumber_input) }}</b>
                 </p>
             </div>
             <div class="rounded-xl bg-orange-600 text-white px-5 py-3 text-center">

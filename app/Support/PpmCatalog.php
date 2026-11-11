@@ -94,6 +94,23 @@ class PpmCatalog
     }
 
     /**
+     * forSurvey(), tetapi hanya pilar yang boleh dikelola role admin tersebut
+     * (dipakai input responden admin & import Excel).
+     */
+    public static function forRole(?string $role): array
+    {
+        $catalog = self::forSurvey();
+        $allowed = BagianOptions::codesForRole($role);
+        $pilarIds = array_keys(array_filter(self::pilar(), fn ($p) => in_array($p['kode'], $allowed, true)));
+
+        $catalog['pilar'] = array_intersect_key($catalog['pilar'], array_flip($pilarIds));
+        $catalog['program'] = array_filter($catalog['program'], fn ($p) => in_array($p['pilar'], $pilarIds, true));
+        $catalog['rincian'] = array_filter($catalog['rincian'], fn ($r) => isset($catalog['program'][$r['program']]));
+
+        return $catalog;
+    }
+
+    /**
      * Tentukan perusahaan yang dinilai.
      *
      * - Rincian "dinilai sebagai grup" (Beasiswa, 4 program Kesehatan) -> selalu BAYAN.

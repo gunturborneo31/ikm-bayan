@@ -251,6 +251,11 @@
     </div>
 
     @include('layouts.sidebar')
+    @if (session('akses_ditolak'))
+        <div class="admin-main" style="padding-bottom:0">
+            <div class="px-4 py-3 rounded-lg bg-amber-100 border border-amber-300 text-amber-900 font-semibold text-sm">{{ session('akses_ditolak') }}</div>
+        </div>
+    @endif
     @yield('content')
 
     <script>

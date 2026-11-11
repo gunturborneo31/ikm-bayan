@@ -2,7 +2,7 @@
 
 namespace App\Services;
 
-use App\Support\BagianOptions;
+use App\Support\PpmCatalog;
 use App\Support\SurveyOptions;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
@@ -13,6 +13,10 @@ use PhpOffice\PhpSpreadsheet\Shared\Date as ExcelDate;
  * Reads an uploaded respondent spreadsheet, checks every row and finds
  * duplicates (inside the file and against the database) before anything
  * is saved.
+ *
+ * Satu baris = satu penilaian, dengan alur yang sama seperti survei:
+ * desa -> rincian program -> perusahaan (jawaban responden / "Tidak tahu").
+ * Perusahaan yang dinilai ditentukan oleh PpmCatalog::attribute.
  */
 class SurveyExcelImport
 {
@@ -25,21 +29,37 @@ class SurveyExcelImport
     public const SIMILAR = 'similar';
     public const NEW = 'new';
 
-    /** @param array<string,string> $allowedBagian code => name */
-    public function __construct(private array $allowedBagian)
+    /** Label "Tidak tahu" di Excel. */
+    public const LABEL_TIDAK_TAHU = 'Tidak tahu';
+
+    /** @param array $catalog PpmCatalog::forRole(): desa, perusahaan, pilar, program, rincian yang boleh diisi */
+    public function __construct(private array $catalog)
     {
     }
 
     /** Column headers of the downloadable template, in order. */
     public static function templateHeaders(): array
     {
-        $headers = ['Tanggal Survei', 'Pilar', 'Nama', 'No HP', 'Alamat / Desa', 'Jenis Kelamin', 'Usia', 'Pendidikan', 'Pekerjaan'];
+        $headers = ['Tanggal Survei', 'Desa', 'Rincian Program', 'Perusahaan (jawaban responden)', 'Kode Responden',
+            'Jenis Responden', 'Nama', 'No HP', 'Alamat (RT/Dusun)', 'Jenis Kelamin', 'Usia', 'Pendidikan', 'Pekerjaan'];
         foreach (SurveyOptions::UNSUR as $no => [$name]) {
             $headers[] = "U{$no} {$name}";
         }
         $headers[] = 'Saran / Masukan';
 
         return $headers;
+    }
+
+    /** Teks pilihan rincian di Excel: "P5.1.2 - Nama rincian". */
+    public static function rincianLabel(string $id, string $nama): string
+    {
+        return mb_substr($id . ' - ' . $nama, 0, 250);
+    }
+
+    /** Teks pilihan perusahaan di Excel: "TA - Tabang Alas". */
+    public static function perusahaanLabel(string $kode, string $nama): string
+    {
+        return $kode . ' - ' . $nama;
     }
 
     /**
@@ -55,9 +75,9 @@ class SurveyExcelImport
         $headerRow = array_shift($table) ?? [];
         [$columns, $unknown] = $this->mapHeaders($headerRow);
 
-        $missing = array_diff(['bagian', 'nama', 'u1'], array_keys($columns));
+        $missing = array_diff(['desa', 'rincian', 'perusahaan', 'nama', 'u1'], array_keys($columns));
         if ($missing) {
-            throw new \RuntimeException('Format kolom tidak dikenali. Pastikan baris pertama berisi judul kolom dari format Excel yang disediakan (minimal kolom Pilar, Nama, dan U1–U9).');
+            throw new \RuntimeException('Format kolom tidak sesuai. Gunakan format Excel terbaru dari tombol "Download Format" (wajib ada kolom Desa, Rincian Program, Perusahaan, Nama, dan U1–U9).');
         }
 
         $rows = [];
@@ -75,6 +95,7 @@ class SurveyExcelImport
             $rows[] = $this->parseRow($index + 2, $raw);
         }
 
+        $this->assignRespondents($rows);
         $this->markDuplicates($rows);
 
         $summary = ['total' => count($rows)];
@@ -96,21 +117,22 @@ class SurveyExcelImport
         $keys = [];
         DB::table('survey_responses')
             ->whereIn(DB::raw('DATE(created_at)'), $dates)
-            ->select('nama', 'nohp', 'jenisPelayanan', 'created_at')
+            ->whereNotNull('rincian_id')
+            ->select('nama', 'nohp', 'rincian_id', 'created_at')
             ->orderBy('id')
             ->chunk(1000, function ($chunk) use (&$keys) {
                 foreach ($chunk as $db) {
-                    $keys[self::key($db->nama, $db->nohp, Carbon::parse($db->created_at)->format('Y-m-d'), $db->jenisPelayanan)] = true;
+                    $keys[self::key($db->nama, $db->nohp, Carbon::parse($db->created_at)->format('Y-m-d'), $db->rincian_id)] = true;
                 }
             });
 
         return $keys;
     }
 
-    /** Identity of one survey: same person, same day, same pilar. */
-    public static function key(?string $nama, ?string $nohp, string $tanggal, ?string $bagian): string
+    /** Identitas satu penilaian: orang yang sama, hari yang sama, rincian program yang sama. */
+    public static function key(?string $nama, ?string $nohp, string $tanggal, ?string $rincianId): string
     {
-        return implode('|', [self::norm($nama), self::digits($nohp), $tanggal, (string) $bagian]);
+        return implode('|', [self::norm($nama), self::digits($nohp), $tanggal, (string) $rincianId]);
     }
 
     /** Stored in client_uuid so the database itself refuses a second copy. */
@@ -125,11 +147,14 @@ class SurveyExcelImport
     {
         $aliases = [
             'tanggal' => ['tanggalsurvei', 'tanggal', 'tgl', 'tglsurvei'],
-            'tahun' => ['tahun'],
-            'bagian' => ['pilar', 'pilarprogram', 'program', 'bagian', 'jenispelayanan'],
+            'desa' => ['desa', 'namadesa'],
+            'rincian' => ['rincianprogram', 'rincian', 'kegiatan', 'rincianprogramppm'],
+            'perusahaan' => ['perusahaanjawabanresponden', 'perusahaan', 'perusahaanpelaksana', 'pelaksana'],
+            'kode' => ['koderesponden', 'kode', 'noresponden', 'idresponden'],
+            'jenis_responden' => ['jenisresponden', 'kategoriresponden'],
             'nama' => ['nama', 'namaresponden', 'namalengkap'],
             'nohp' => ['nohp', 'hp', 'nomorhp', 'notelepon', 'telepon', 'nowa', 'notelp'],
-            'alamat' => ['alamat', 'alamatdesa', 'desa'],
+            'alamat' => ['alamatrtdusun', 'alamat', 'rtdusun', 'alamatdesa'],
             'jenkel' => ['jeniskelamin', 'jenkel', 'jk'],
             'usia' => ['usia', 'umur'],
             'pendidikan' => ['pendidikan'],
@@ -155,7 +180,7 @@ class SurveyExcelImport
                     break;
                 }
             }
-            // "U1 Kesesuaian Program", "Unsur 1", "1. Kesesuaian Program" (and the old "Unusr 8" typo)
+            // "U1 Kesesuaian Program", "Unsur 1", "1. Kesesuaian Program"
             if (! $field && preg_match('/^(?:u|unsur|unusr)?([1-9])(?![0-9])/', $n, $m)) {
                 $field = 'u' . $m[1];
             }
@@ -178,29 +203,46 @@ class SurveyExcelImport
         $notes = [];
         $data = [];
 
-        // Tanggal (old template only had "Tahun")
         $tanggal = $this->parseDate($raw['tanggal'] ?? null);
         if ($tanggal === false) {
             $errors[] = 'Tanggal survei tidak terbaca (gunakan format hari/bulan/tahun, mis. 15/10/2026)';
         } elseif ($tanggal === null) {
-            $tahun = (int) ($raw['tahun'] ?? 0);
-            if ($tahun >= 2000 && $tahun <= (int) date('Y')) {
-                $tanggal = $tahun === (int) date('Y') ? date('Y-m-d') : "{$tahun}-12-31";
-                $notes[] = 'Tanggal kosong, memakai ' . Carbon::parse($tanggal)->format('d/m/Y');
-            } else {
-                $errors[] = 'Tanggal survei wajib diisi';
-            }
+            $errors[] = 'Tanggal survei wajib diisi';
         }
         if ($tanggal && $tanggal > date('Y-m-d')) {
             $errors[] = 'Tanggal survei melebihi hari ini';
         }
         $data['tanggal'] = $tanggal ?: null;
 
-        $data['bagian'] = $this->matchBagian($raw['bagian'] ?? null);
-        if (! $data['bagian']) {
-            $errors[] = $this->blank($raw['bagian'] ?? null) ? 'Pilar wajib diisi' : 'Pilar "' . $raw['bagian'] . '" tidak dikenal';
+        // Desa -> rincian -> perusahaan (sama dengan alur survei)
+        $data['desa_id'] = $this->matchDesa($raw['desa'] ?? null);
+        if (! $data['desa_id']) {
+            $errors[] = $this->blank($raw['desa'] ?? null) ? 'Desa wajib diisi' : 'Desa "' . $raw['desa'] . '" tidak dikenal';
+        }
+        $data['rincian_id'] = $this->matchRincian($raw['rincian'] ?? null);
+        if (! $data['rincian_id']) {
+            $errors[] = $this->blank($raw['rincian'] ?? null) ? 'Rincian program wajib diisi' : 'Rincian program "' . $raw['rincian'] . '" tidak dikenal';
+        }
+        $data['perusahaan_jawaban'] = $this->matchPerusahaan($raw['perusahaan'] ?? null);
+        if (! $data['perusahaan_jawaban']) {
+            $errors[] = $this->blank($raw['perusahaan'] ?? null) ? 'Perusahaan wajib diisi (pilih "Tidak tahu" bila responden tidak tahu)' : 'Perusahaan "' . $raw['perusahaan'] . '" tidak dikenal';
         }
 
+        $atribusi = null;
+        if ($data['desa_id'] && $data['rincian_id'] && $data['perusahaan_jawaban']) {
+            $pelaksana = PpmCatalog::pelaksana($data['rincian_id'], $data['desa_id']);
+            if (! $pelaksana) {
+                $errors[] = 'Rincian ini tidak berjalan di desa ' . $this->catalog['desa'][$data['desa_id']] . ' (lihat sheet "Daftar Program per Desa")';
+            } else {
+                $atribusi = PpmCatalog::attribute($data['rincian_id'], $data['desa_id'], $data['perusahaan_jawaban']);
+                if (! $atribusi) {
+                    $errors[] = 'Perusahaan ' . $data['perusahaan_jawaban'] . ' bukan pelaksana rincian ini di desa tersebut (pelaksana: ' . implode(', ', $pelaksana) . ', atau "Tidak tahu")';
+                }
+            }
+        }
+        $data += $atribusi ?? ['perusahaan_dinilai' => null, 'sumber_atribusi' => null, 'perusahaan_opsi' => null];
+
+        $data['kode'] = $this->text($raw['kode'] ?? null, 50);
         $data['nama'] = $this->text($raw['nama'] ?? null, 150);
         if ($data['nama'] === null) {
             $errors[] = 'Nama wajib diisi';
@@ -210,6 +252,10 @@ class SurveyExcelImport
         $data['saran'] = $this->text($raw['saran'] ?? null, 600);
 
         $choice = [
+            'jenis_responden' => ['Jenis responden', $this->matchOption($raw['jenis_responden'] ?? null, SurveyOptions::JENIS_RESPONDEN, [
+                'penerima' => 'Penerima Manfaat', 'masyarakat' => 'Masyarakat Umum', 'umum' => 'Masyarakat Umum',
+                'aparat' => 'Aparat Desa', 'perangkatdesa' => 'Aparat Desa', 'aparatdesa' => 'Aparat Desa',
+            ])],
             'jenkel' => ['Jenis kelamin', $this->matchJenkel($raw['jenkel'] ?? null)],
             'usia' => ['Usia', $this->matchUsia($raw['usia'] ?? null)],
             'pendidikan' => ['Pendidikan', $this->matchOption($raw['pendidikan'] ?? null, SurveyOptions::PENDIDIKAN, [
@@ -240,6 +286,8 @@ class SurveyExcelImport
             $errors[] = 'Nilai U' . implode(', U', $badUnsur) . ' kosong atau bukan 1–4';
         }
 
+        $rincianNama = $data['rincian_id'] ? ($this->catalog['rincian'][$data['rincian_id']]['nama'] ?? '') : (string) ($raw['rincian'] ?? '');
+
         return [
             'line' => $line,
             'data' => $data,
@@ -247,12 +295,32 @@ class SurveyExcelImport
                 'nama' => $data['nama'] ?? (string) ($raw['nama'] ?? ''),
                 'nohp' => $data['nohp'],
                 'tanggal' => $data['tanggal'] ? Carbon::parse($data['tanggal'])->format('d/m/Y') : (string) ($raw['tanggal'] ?? ''),
-                'pilar' => $data['bagian'] ? $this->allowedBagian[$data['bagian']] : (string) ($raw['bagian'] ?? ''),
+                'desa' => $data['desa_id'] ? $this->catalog['desa'][$data['desa_id']] : (string) ($raw['desa'] ?? ''),
+                'rincian' => $rincianNama,
+                'perusahaan' => $data['perusahaan_dinilai']
+                    ? $data['perusahaan_dinilai'] . ($data['perusahaan_jawaban'] === PpmCatalog::TIDAK_TAHU ? ' (jawaban: tidak tahu)' : '')
+                    : (string) ($raw['perusahaan'] ?? ''),
             ],
             'status' => $errors ? self::INVALID : self::NEW,
             'notes' => array_merge($errors, $notes),
-            'key' => $errors ? null : self::key($data['nama'], $data['nohp'], $data['tanggal'], $data['bagian']),
+            'key' => $errors ? null : self::key($data['nama'], $data['nohp'], $data['tanggal'], $data['rincian_id']),
         ];
+    }
+
+    /**
+     * Baris milik responden yang sama berbagi responden_uuid: memakai Kode Responden
+     * bila diisi, selain itu nama + no. HP + desa + tanggal yang sama.
+     */
+    private function assignRespondents(array &$rows): void
+    {
+        foreach ($rows as &$row) {
+            $d = $row['data'];
+            $basis = $d['kode']
+                ? 'kode|' . self::norm($d['kode']) . '|' . $d['tanggal']
+                : 'orang|' . self::norm($d['nama']) . '|' . self::digits($d['nohp']) . '|' . $d['desa_id'] . '|' . $d['tanggal'];
+            $row['data']['responden_uuid'] = 'xls-r-' . substr(sha1($basis), 0, 30);
+        }
+        unset($row);
     }
 
     private function markDuplicates(array &$rows): void
@@ -262,22 +330,22 @@ class SurveyExcelImport
             return;
         }
 
-        // Database rows in the same years and pilar, for exact and "similar" matches.
+        // Database rows in the same years and rincian, for exact and "similar" matches.
         $years = array_values(array_unique(array_map(fn ($r) => (int) substr($r['data']['tanggal'], 0, 4), $valid)));
-        $pilars = array_values(array_unique(array_map(fn ($r) => $r['data']['bagian'], $valid)));
+        $rincian = array_values(array_unique(array_map(fn ($r) => $r['data']['rincian_id'], $valid)));
         $dbExact = [];
         $dbPerson = [];
         DB::table('survey_responses')
-            ->whereIn(DB::raw('YEAR(created_at)'), $years)
-            ->whereIn('jenisPelayanan', $pilars)
-            ->select('id', 'nama', 'nohp', 'jenisPelayanan', 'created_at')
+            ->whereIn('tahun', $years)
+            ->whereIn('rincian_id', $rincian)
+            ->select('id', 'nama', 'nohp', 'rincian_id', 'created_at')
             ->orderBy('id')
             ->chunk(1000, function ($chunk) use (&$dbExact, &$dbPerson) {
                 foreach ($chunk as $db) {
                     $date = Carbon::parse($db->created_at)->format('Y-m-d');
-                    $dbExact[self::key($db->nama, $db->nohp, $date, $db->jenisPelayanan)] = $db->id;
+                    $dbExact[self::key($db->nama, $db->nohp, $date, $db->rincian_id)] = $db->id;
                     if (self::digits($db->nohp) !== '') {
-                        $dbPerson[self::personKey($db->nama, $db->nohp, $db->jenisPelayanan)][] = $date;
+                        $dbPerson[self::personKey($db->nama, $db->nohp, $db->rincian_id)][] = $date;
                     }
                 }
             });
@@ -289,21 +357,21 @@ class SurveyExcelImport
                 continue;
             }
             $d = $row['data'];
-            $person = self::digits($d['nohp']) !== '' ? self::personKey($d['nama'], $d['nohp'], $d['bagian']) : null;
+            $person = self::digits($d['nohp']) !== '' ? self::personKey($d['nama'], $d['nohp'], $d['rincian_id']) : null;
 
             if (isset($seenKey[$row['key']])) {
                 $row['status'] = self::DUP_FILE;
                 array_unshift($row['notes'], 'Sama dengan baris ' . $seenKey[$row['key']] . ' di file ini');
             } elseif (isset($dbExact[$row['key']])) {
                 $row['status'] = self::DUP_DB;
-                array_unshift($row['notes'], 'Sudah tersimpan di sistem (ID ' . $dbExact[$row['key']] . '): nama, no. HP, tanggal, dan pilar sama');
+                array_unshift($row['notes'], 'Sudah tersimpan di sistem (ID ' . $dbExact[$row['key']] . '): nama, no. HP, tanggal, dan rincian program sama');
             } elseif ($person && isset($dbPerson[$person])) {
                 $row['status'] = self::SIMILAR;
                 $dates = implode(', ', array_map(fn ($x) => Carbon::parse($x)->format('d/m/Y'), array_slice(array_unique($dbPerson[$person]), 0, 3)));
-                array_unshift($row['notes'], "Nama & no. HP ini sudah mengisi pilar yang sama di sistem pada {$dates}");
+                array_unshift($row['notes'], "Nama & no. HP ini sudah menilai rincian program yang sama di sistem pada {$dates}");
             } elseif ($person && isset($seenPerson[$person])) {
                 $row['status'] = self::SIMILAR;
-                array_unshift($row['notes'], 'Nama & no. HP sama dengan baris ' . $seenPerson[$person] . ' (tanggal berbeda)');
+                array_unshift($row['notes'], 'Nama & no. HP sama dengan baris ' . $seenPerson[$person] . ' untuk rincian yang sama (tanggal berbeda)');
             }
 
             $seenKey[$row['key']] ??= $row['line'];
@@ -314,9 +382,9 @@ class SurveyExcelImport
         unset($row);
     }
 
-    private static function personKey(?string $nama, ?string $nohp, ?string $bagian): string
+    private static function personKey(?string $nama, ?string $nohp, ?string $rincianId): string
     {
-        return self::norm($nama) . '|' . self::digits($nohp) . '|' . $bagian;
+        return self::norm($nama) . '|' . self::digits($nohp) . '|' . $rincianId;
     }
 
     public static function norm($value): string
@@ -380,15 +448,59 @@ class SurveyExcelImport
         return false;
     }
 
-    private function matchBagian($value): ?string
+    private function matchDesa($value): ?int
+    {
+        $n = self::norm(preg_replace('/^desa\s+/i', '', trim((string) $value)));
+        if ($n === '') {
+            return null;
+        }
+        foreach ($this->catalog['desa'] as $id => $nama) {
+            if ($n === self::norm($nama)) {
+                return (int) $id;
+            }
+        }
+
+        return null;
+    }
+
+    /** "P5.1.2 - Nama", "P5.1.2", atau nama rincian persis. */
+    private function matchRincian($value): ?string
+    {
+        $s = trim((string) $value);
+        if ($s === '') {
+            return null;
+        }
+        if (preg_match('/^(P\d+(?:\.\d+){2})\b/i', $s, $m)) {
+            $id = strtoupper($m[1]);
+
+            return isset($this->catalog['rincian'][$id]) ? $id : null;
+        }
+        $n = self::norm($s);
+        foreach ($this->catalog['rincian'] as $id => $r) {
+            if ($n === self::norm($r['nama'])) {
+                return $id;
+            }
+        }
+
+        return null;
+    }
+
+    /** Kode perusahaan ("TA", "TA - Tabang Alas", "Tabang Alas") atau TIDAK_TAHU. */
+    private function matchPerusahaan($value): ?string
     {
         $n = self::norm($value);
         if ($n === '') {
             return null;
         }
-        foreach ($this->allowedBagian as $code => $name) {
-            if ($n === self::norm($code) || $n === self::norm($name) || $n === self::norm(BagianOptions::normalizeCode($code))) {
-                return $code;
+        if (in_array($n, ['tidaktahu', 'tidaktau', 'tdktahu', 'gatau', 'nggaktahu'], true)) {
+            return PpmCatalog::TIDAK_TAHU;
+        }
+        foreach ($this->catalog['perusahaan'] as $kode => $nama) {
+            if ($kode === PpmCatalog::GRUP) {
+                continue; // BAYAN bukan pilihan jawaban responden
+            }
+            if (in_array($n, [self::norm($kode), self::norm($nama), self::norm(self::perusahaanLabel($kode, $nama)), self::norm('PT ' . $nama)], true)) {
+                return $kode;
             }
         }
 

@@ -22,6 +22,17 @@ class RekapTotalController extends Controller
 
         $query = \App\Support\SurveyFilter::query();
 
+        // Filter penginput: id akun, atau "survei" (diisi sendiri oleh responden)
+        $penginput = (string) request('penginput', '');
+        $byPenginput = function ($q) use ($penginput) {
+            if ($penginput === 'survei') {
+                $q->where('survey_responses.sumber_input', 'survei');
+            } elseif (ctype_digit($penginput)) {
+                $q->where('survey_responses.input_oleh', (int) $penginput);
+            }
+        };
+        $byPenginput($query);
+
         if (Schema::hasTable('sub_jenis')) {
             $query->leftJoin('sub_jenis', 'survey_responses.id_sub_jenis', '=', 'sub_jenis.id')
                 ->select('survey_responses.*', 'sub_jenis.jenis as sub_jenis_jenis');
@@ -32,7 +43,7 @@ class RekapTotalController extends Controller
         $selects = $query->orderByDesc('survey_responses.created_at')->paginate(10)->withQueryString();
 
         // Total nilai per unsur untuk semua data sesuai filter (bukan hanya halaman ini)
-        $totals = \App\Support\SurveyFilter::query()
+        $totals = tap(\App\Support\SurveyFilter::query(), $byPenginput)
             ->selectRaw('COUNT(*) as n, ' . implode(', ', array_map(fn ($i) => "COALESCE(SUM(u{$i}),0) as u{$i}", range(1, 9))))
             ->first();
 
@@ -41,7 +52,9 @@ class RekapTotalController extends Controller
         $pilarNames = \App\Support\BagianOptions::codeNameMap();
         $rincianNames = Schema::hasTable('ppm_rincian') ? DB::table('ppm_rincian')->pluck('nama', 'id')->all() : [];
 
-        return view('RekapTotal.index', compact('selects', 'totals', 'desaNames', 'pilarNames', 'rincianNames'));
+        $akunOptions = DB::table('users')->orderBy('name')->pluck('name', 'id')->all();
+
+        return view('RekapTotal.index', compact('selects', 'totals', 'desaNames', 'pilarNames', 'rincianNames', 'penginput', 'akunOptions'));
     }
 
     /**

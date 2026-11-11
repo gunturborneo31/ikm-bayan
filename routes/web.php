@@ -97,7 +97,16 @@ Route::middleware('admin.session')->group(function () {
     Route::redirect('/sub-jenis', '/master-ppm')->name('subjenis.index');
 
     // Master Data PPM: desa, perusahaan, pilar -> program -> rincian, lokasi pelaksana
-    Route::prefix('master-ppm')->name('master-ppm.')->controller(MasterPpmController::class)->group(function () {
+    // Akun Pengguna (khusus admin)
+    Route::middleware('admin.role')->prefix('akun')->name('akun.')->controller(\App\Http\Controllers\AkunController::class)->group(function () {
+        Route::get('/', 'index')->name('index');
+        Route::post('/', 'store')->name('store');
+        Route::put('/{id}', 'update')->whereNumber('id')->name('update');
+        Route::delete('/{id}', 'destroy')->whereNumber('id')->name('destroy');
+    });
+
+    // Master Data PPM (khusus admin; surveyor tidak bisa membuka)
+    Route::middleware('admin.role')->prefix('master-ppm')->name('master-ppm.')->controller(MasterPpmController::class)->group(function () {
         Route::get('/', 'index')->name('index');
         Route::get('/export', 'export')->name('export');
         Route::post('/import', 'import')->name('import');

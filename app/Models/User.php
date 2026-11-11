@@ -25,6 +25,7 @@ class User extends Authenticatable implements FilamentUser
         'password',
         'username',
         'keterangan',
+        'is_active',
     ];
 
     /**
@@ -44,11 +45,14 @@ class User extends Authenticatable implements FilamentUser
      */
     protected $casts = [
         'email_verified_at' => 'datetime',
+        'last_login_at' => 'datetime',
+        'is_active' => 'boolean',
         'password' => 'hashed',
     ];
 
+    /** Panel Filament (/admin) hanya untuk akun admin yang aktif, bukan surveyor. */
     public function canAccessPanel(Panel $panel): bool
     {
-        return true;
+        return ($this->is_active ?? true) && \App\Support\Akses::isAdmin($this->keterangan ?? 'admin');
     }
 }

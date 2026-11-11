@@ -87,5 +87,7 @@ class NilaiUnsur extends Model
             'perusahaan_dinilai',
             'sumber_atribusi',
             'perusahaan_opsi',
+            'input_oleh',
+            'sumber_input',
     ];
 }

@@ -113,6 +113,7 @@ class PpmSurveyController extends Controller
             'rincian_id' => $data['rincian_id'],
             'perusahaan_jawaban' => $data['perusahaan_jawaban'],
             'saran' => $data['saran'] ?? null,
+            'sumber_input' => 'survei', // diisi sendiri oleh responden
         ] + $atribusi;
 
         foreach (self::IDENTITAS as $field) {
