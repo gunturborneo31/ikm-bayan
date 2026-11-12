@@ -33,9 +33,38 @@
     $filterWrapperClass = $filterWrapperClass ?? 'flex items-center gap-6';
 @endphp
 
-<nav class="{{ $navClass }} relative overflow-visible">
+<style>
+    /* HP: filter tidak digeser ke samping. Tiap filter jadi satu kolom (label di atas, pilihan di bawah)
+       dalam baris sendiri selebar layar, di bawah logo & tombol. */
+    @media (max-width: 767px) {
+        .top-nav-bar > div { flex-wrap: wrap !important; row-gap: 0.45rem; }
+        .top-nav-bar .top-nav-brand { min-width: 0; flex: 1 1 auto; }
+        .top-nav-bar .top-nav-brand .mx-4 { display: none; }
+        .top-filter-row {
+            order: 99;
+            width: 100% !important;
+            display: grid !important;
+            grid-auto-flow: column;
+            grid-auto-columns: minmax(0, 1fr);
+            gap: 0.4rem !important;
+            overflow: visible !important;
+            padding: 0 0 0.25rem !important;
+            margin: 0 !important;
+        }
+        .top-filter-row .filter-inline { flex-direction: column; align-items: stretch; gap: 0.15rem; min-width: 0; }
+        .top-filter-row .filter-inline-label { padding-left: 0.35rem; }
+        .top-filter-row .filter-chip { min-width: 0 !important; width: 100%; padding: 0.42rem 0.5rem 0.42rem 0.6rem; }
+        .top-filter-row .filter-chip summary { gap: 0.3rem; }
+        .top-filter-row .filter-chip summary > .material-symbols-outlined:first-child { display: none; }
+        .top-filter-row .filter-chip-value { font-size: 0.66rem; min-width: 0; }
+    }
+    /* Halaman tidak pernah melebar ke samping karena filter */
+    html, body { max-width: 100%; overflow-x: hidden; }
+</style>
+
+<nav class="{{ $navClass }} relative overflow-visible top-nav-bar">
     <div class="{{ $containerClass }} overflow-visible">
-        <div class="flex items-center gap-2">
+        <div class="flex items-center gap-2 top-nav-brand">
             <img src="{{ asset('assets/logo-bayan.png') }}" alt="Logo Bayan" class="h-8 w-8 rounded-xl bg-white p-1 border border-orange-200">
             <span class="{{ $brandTitleClass }}">{{ $brandTitle }}</span>
             <div class="h-6 w-px bg-slate-200 mx-4"></div>
@@ -44,7 +73,7 @@
             @endif
         </div>
 
-        <div class="{{ $filterWrapperClass }} overflow-visible">
+        <div class="{{ $filterWrapperClass }} overflow-visible top-filter-row">
 
             <div class="filter-inline">
                 <span class="filter-inline-label">Tahun</span>

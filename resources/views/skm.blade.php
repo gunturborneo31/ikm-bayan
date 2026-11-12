@@ -839,8 +839,8 @@ $arrowPrev = 'M12 2.25c-5.385 0-9.75 4.365-9.75 9.75s4.365 9.75 9.75 9.75 9.75-4
 ?>
 
 <style>
-    /* Daftar pilihan yang bisa panjang (program, rincian) tetap bisa digulir di dalam kartu */
-    .ppm-scroll { max-height: calc(100dvh - 19rem); overflow-y: auto; padding-right: 4px; scrollbar-width: thin; scrollbar-color: #ffb781 transparent; }
+    /* Daftar pilihan (program, rincian) tampil utuh; bila panjang, langkahnya yang digulir */
+    .ppm-scroll { max-height: none; overflow: visible; }
     .ppm-pilar-title { font-size: 11px; font-weight: 800; letter-spacing: .18em; text-transform: uppercase; color: #924c00; margin: 14px 0 6px; }
     .ppm-pilar-title:first-child { margin-top: 0; }
     .ppm-done { opacity: .55; cursor: not-allowed !important; }
@@ -854,37 +854,59 @@ $arrowPrev = 'M12 2.25c-5.385 0-9.75 4.365-9.75 9.75s4.365 9.75 9.75 9.75 9.75-4
         .survey-track a.step-nav { width: auto !important; flex: 1 1 0 !important; min-width: 0 !important; justify-content: center !important; font-size: 0.82rem !important; }
     }
 
-    /* ── Responsif: isi kartu tidak boleh terpotong ──
-       Kartu tiap langkah tingginya dibatasi layar; bila isinya lebih panjang
-       (daftar desa, form identitas, pertanyaan) kartu bisa digulir. */
-    .survey-track > div[id] > div:first-child,
-    #awal > div:first-child {
+    /* ── Isi yang tidak muat 1 layar tetap bisa digulir ──
+       Setiap langkah (desa, program, identitas, pertanyaan, saran) setinggi layar.
+       Bila isinya lebih tinggi, LANGKAH itu yang digulir (seperti halaman biasa),
+       di semua ukuran layar. Kartu di dalamnya tampil utuh tanpa dipotong. */
+    .survey-track > div[id] {
         overflow-y: auto !important;
         overflow-x: hidden !important;
         overscroll-behavior: contain;
         -webkit-overflow-scrolling: touch;
+        scrollbar-width: thin;
+        scrollbar-color: rgba(255, 255, 255, 0.7) transparent;
+        /* di tengah bila muat; bila tidak muat mulai dari atas (tidak terpotong ke atas) */
+        align-items: flex-start !important;
+        align-items: safe center !important;
     }
-    /* Konten di tengah, tetapi bila lebih tinggi dari kartu mulai dari atas (tidak terpotong ke atas) */
-    .survey-track > div[id] > div.justify-center:first-child { justify-content: safe center !important; }
-    @media (max-width: 1024px) {
-        .survey-track > div[id] > div.justify-center:first-child { justify-content: flex-start !important; }
+    .survey-track > div[id]::-webkit-scrollbar { width: 6px; }
+    .survey-track > div[id]::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.7); border-radius: 999px; }
+
+    .survey-track > div[id] > div:first-child,
+    #awal > div:first-child {
+        max-height: none !important;
+        height: auto !important;
+        overflow: visible !important;
+        flex-shrink: 0;
     }
+    /* Isi kartu pertanyaan yang semula dipusatkan vertikal: mulai dari atas bila tinggi */
+    .survey-track > div[id] > div.justify-center:first-child { justify-content: flex-start !important; }
+
     /* Popup selamat datang: bisa digulir di layar pendek */
     #popup #modal { max-height: 100dvh; padding: 1rem 0; }
 
+    /* Tombol Sebelum/Lanjut berada di akhir langkah (tidak menempel/menutupi isi).
+       Ruang bawah langkah dibuat lebih besar dari bar progres agar tombol terakhir
+       tidak tertutup bar progres saat digulir sampai bawah. */
+    .survey-track > div[id] .step-actions { position: static !important; }
+
+    /* Header & bar progres selebar layar tapi yang terlihat hanya "pil"-nya:
+       area transparannya tidak boleh menghalangi klik pada isi di bawahnya. */
+    .survey-header, .survey-footer { pointer-events: none !important; }
+    .survey-header .survey-brand, .survey-footer .survey-progress { pointer-events: auto; }
+    .survey-track > div[id] { padding-bottom: calc(4.5rem + env(safe-area-inset-bottom, 0px)) !important; }
+
     @media (max-width: 1024px) {
-        /* Satu area gulir saja (kartu), daftar di dalamnya tidak ikut punya scroll sendiri */
-        .ppm-scroll { max-height: none; overflow: visible; padding-right: 0; }
-        /* Tombol Sebelum/Lanjut tetap terlihat di bawah kartu */
-        .survey-track > div[id] > div:first-child .step-actions {
-            position: sticky;
-            bottom: -0.85rem;
-            z-index: 5;
-            background: rgba(255, 255, 255, 0.97);
-            padding-top: 0.5rem !important;
-            padding-bottom: 0.5rem !important;
-            box-shadow: 0 -8px 16px -12px rgba(146, 76, 0, 0.35);
-        }
+        .survey-track > div[id] { padding-top: 3.6rem !important; }
+
+        /* #kedua (usia, pendidikan, pekerjaan): satu kolom penuh.
+           Baris tombol punya class col-span-2 yang memaksa kolom ke-2 tak terlihat,
+           sehingga isian terjepit di separuh kiri; dikembalikan ke satu kolom. */
+        #kedua > div:first-child { grid-template-columns: minmax(0, 1fr) !important; grid-template-rows: none !important; }
+        #kedua > div:first-child > * { grid-column: 1 / -1 !important; }
+        #kedua ul.grid { grid-template-columns: minmax(0, 1fr) !important; }
+        #kedua > div:first-child > div.gap-4 { margin-bottom: 0.4rem; }
+        #kedua .flex.justify-between:not(.step-actions) { justify-content: flex-start; gap: 0.5rem; }
         /* Nama desa pendek: tetap 2 kolom di HP agar tidak terlalu panjang */
         .survey-track #desaRadios { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
         .survey-track #desaRadios label { padding: 0.6rem 0.7rem; }
@@ -2219,10 +2241,10 @@ $arrowPrev = 'M12 2.25c-5.385 0-9.75 4.365-9.75 9.75s4.365 9.75 9.75 9.75 9.75-4
             });
         }
 
-        // Pindah langkah: kartu langkah baru selalu dimulai dari atas
+        // Pindah langkah: langkah baru selalu ditampilkan dari atas
         function resetCardScroll() {
-            const card = document.querySelector((window.location.hash || '#awal') + ' > div');
-            if (card) card.scrollTop = 0;
+            const step = document.querySelector(window.location.hash || '#awal');
+            if (step) step.scrollTop = 0;
         }
 
         updateStepFromHash();

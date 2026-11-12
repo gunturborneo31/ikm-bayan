@@ -300,11 +300,13 @@ $nilaiSkm = json_encode($nilaiSkm);
 
         /* HP */
         @media (max-width: 767px) {
-            /* Ruang untuk navigasi bawah */
-            main { padding-left: 0.5rem !important; padding-right: 0.5rem !important; padding-bottom: 6rem !important; }
+            main { padding-left: 0.5rem !important; padding-right: 0.5rem !important; padding-bottom: 1.5rem !important; }
 
             .grid-cols-12 { grid-template-columns: 1fr !important; }
-            [class*="col-span-"] { grid-column: span 1 !important; }
+            /* Hanya 3 kolom utama halaman yang ditumpuk; kartu Kinerja (4/6) & Mutu (2/6) tetap berdampingan rata */
+            main > div > [class*="col-span-"] { grid-column: span 1 !important; }
+            .grid-cols-6 { align-items: stretch; }
+            .grid-cols-6 > div { min-height: 6.5rem; }
 
             /* Nav: logo & tombol tetap satu baris, judul situs disingkat */
             nav > div { gap: 0.25rem; padding-left: 0.25rem; padding-right: 0.25rem; }
@@ -507,20 +509,6 @@ $nilaiSkm = json_encode($nilaiSkm);
         </div>
     </main>
 
-    <nav class="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-6 pb-4 md:hidden bg-white/95 backdrop-blur-xl rounded-t-3xl shadow-2xl border-t border-slate-100">
-        <a class="js-nav flex flex-col items-center justify-center bg-[#FF8800] text-white rounded-full p-4 transition-all scale-110 shadow-lg" href="#">
-            <span class="material-symbols-outlined">grid_view</span>
-        </a>
-        <a class="js-nav flex flex-col items-center justify-center text-[#574335] p-3 hover:bg-slate-100 rounded-full transition-colors" href="/dashboard">
-            <span class="material-symbols-outlined">assignment</span>
-        </a>
-        <a class="js-nav flex flex-col items-center justify-center text-[#574335] p-3 hover:bg-slate-100 rounded-full transition-colors" href="/skm#awal">
-            <span class="material-symbols-outlined">database</span>
-        </a>
-        <a class="js-nav flex flex-col items-center justify-center text-[#574335] p-3 hover:bg-slate-100 rounded-full transition-colors" href="/login">
-            <span class="material-symbols-outlined">person</span>
-        </a>
-    </nav>
 
 @include('partials.filter-ui-script', [
     'enableLoadingOverlay' => true,
