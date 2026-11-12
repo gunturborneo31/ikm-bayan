@@ -79,6 +79,13 @@
         .item .btns button { padding: 6px 12px; font-size: 13px; }
         .empty { text-align: center; color: var(--muted); font-size: 13px; padding: 18px 0; }
         .hint { font-size: 12px; color: var(--muted); margin-top: 8px; }
+        .list-title { font-size: 12px; font-weight: 800; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; margin: 14px 0 2px; }
+        .pager { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; margin-top: 12px; font-size: 13px; }
+        .pager .nav { display: flex; gap: 6px; align-items: center; }
+        .pager button { padding: 7px 12px; font-size: 13px; }
+        .pager button:disabled { opacity: .45; cursor: not-allowed; }
+        .pager select { width: auto; padding: 6px 8px; font-size: 13px; }
+        .note-cache { font-size: 12px; color: var(--warn); background: var(--warn-bg); border-radius: 8px; padding: 6px 10px; margin-top: 8px; }
         .block { border-top: 1px solid #fde4cc; padding-top: 12px; margin-top: 12px; }
         .block:first-of-type { border-top: 0; padding-top: 0; margin-top: 0; }
         .block-title { font-size: 13px; font-weight: 800; color: var(--orange); margin-bottom: 8px; }
@@ -241,9 +248,18 @@
         <h2>Data Responden <button type="button" class="btn-light" id="refreshBtn" style="padding:6px 10px;font-size:12px">Muat ulang</button></h2>
         <div class="summary" id="summary"></div>
         <input type="search" id="search" placeholder="Cari nama atau no. HP…" autocomplete="off">
+
+        <div id="pendingWrap" hidden>
+            <div class="list-title">Belum terkirim dari perangkat ini</div>
+            <div id="pendingList"></div>
+        </div>
+
+        <div class="list-title" id="serverTitle">Data di sistem</div>
         <div id="list"></div>
-        <p class="hint">Menampilkan 200 data terbaru dari sistem, ditambah data yang belum terkirim dari perangkat ini.
-            Agar bisa dipakai tanpa internet, buka halaman ini minimal sekali saat online.</p>
+        <div class="pager" id="pager"></div>
+
+        <p class="hint">Menampilkan data yang Anda input sendiri dan data tanpa keterangan penginput (mis. survei online).
+            Data dimuat per halaman dari sistem hanya saat halaman itu dibuka. Agar bisa dipakai tanpa internet, buka halaman ini minimal sekali saat online.</p>
     </section>
 </main>
 
@@ -299,6 +315,7 @@
     let syncing = false;
     let lastSync = null;
     let editingKey = null;
+    let editingServer = null; // baris dari daftar sistem yang sedang diubah
 
     // ---------- Pilihan berjenjang: desa -> program -> rincian -> perusahaan ----------
     const desaSel = $('desa_id'), programSel = $('program_id'), rincianSel = $('rincian_id'), chipsEl = $('perusahaanChips');
@@ -359,6 +376,7 @@
         $('samaNote').hidden = true;
         isiProgram();
         editingKey = null;
+        editingServer = null;
         $('editingNote').hidden = true;
         $('cancelEdit').hidden = true;
         $('submitBtn').textContent = 'Simpan';
@@ -435,6 +453,9 @@
                 rec.error = null;
                 rec.savedAt = Date.now();
                 await put(rec);
+            } else if (editingServer) {
+                // Mengubah data dari daftar sistem: simpan perubahan di perangkat lalu kirim
+                await put({ key: editingKey, serverId: editingServer.id, data: { ...editingServer, ...data }, state: 'update', error: null, savedAt: Date.now() });
             }
         } else {
             const key = uuid();
@@ -464,7 +485,18 @@
     });
     $('cancelEdit').addEventListener('click', resetForm);
 
-    // ---------- List ----------
+    // ---------- Daftar data ----------
+    // Data di sistem dimuat per halaman (default 10) hanya saat halaman itu dibuka.
+    // Data yang belum terkirim (tersimpan di perangkat) selalu tampil di atas.
+    const PER_PAGE_OPTIONS = [10, 25, 50];
+    let perPage = 10, page = 1, lastPage = 1, total = 0, rangeFrom = 0, rangeTo = 0;
+    let serverRows = [];
+    let listState = 'idle'; // idle | loading | ok | error | cache
+    let listMessage = '';
+    const CACHE_KEY = 'eskm-input-responden-halaman';
+    const cacheSet = (v) => { try { localStorage.setItem(CACHE_KEY, JSON.stringify(v)); } catch (_) {} };
+    const cacheGet = () => { try { return JSON.parse(localStorage.getItem(CACHE_KEY) || 'null'); } catch (_) { return null; } };
+
     const avg = (d) => {
         const vals = Array.from({ length: UNSUR }, (_, i) => Number(d['u' + (i + 1)]) || 0).filter(Boolean);
         return vals.length ? (vals.reduce((a, b) => a + b, 0) / vals.length).toFixed(2) : '-';
@@ -475,85 +507,217 @@
         return '';
     };
     const fmtDate = (s) => s ? new Date(s + 'T00:00:00').toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' }) : '-';
-    const badge = (rec) => {
-        if (rec.state === 'synced') return '<span class="badge ok">✓ Tersimpan di sistem</span>';
+    const badgeLocal = (rec) => {
         if (rec.state === 'delete') return '<span class="badge wait">Menunggu dihapus</span>';
         if (rec.error) return '<span class="badge bad">Gagal dikirim</span>';
+        if (rec.state === 'update') return '<span class="badge wait">Perubahan belum terkirim</span>';
         return '<span class="badge wait">Belum terkirim (di perangkat)</span>';
     };
 
-    async function render() {
-        const all = await getAll();
-        const q = $('search').value.trim().toLowerCase();
-        const pending = all.filter((r) => r.state !== 'synced');
-        const rows = all
-            .filter((r) => !q || (r.data.nama || '').toLowerCase().includes(q) || (r.data.nohp || '').includes(q))
-            .sort((a, b) => (a.state === 'synced') - (b.state === 'synced')
-                || (b.data.tanggal || '').localeCompare(a.data.tanggal || '')
-                || (b.savedAt || 0) - (a.savedAt || 0));
-
-        $('summary').innerHTML = `<span>Total: <b>${all.length}</b></span>`
-            + `<span>Tersimpan di sistem: <b>${all.length - pending.length}</b></span>`
-            + `<span style="${pending.length ? 'background:#fef3c7;border-color:#fcd34d' : ''}">Belum terkirim: <b>${pending.length}</b></span>`;
-
-        $('list').innerHTML = rows.length ? rows.map((r) => `
-            <div class="item ${r.state === 'synced' ? '' : 'pending'} ${r.state === 'delete' ? 'deleting' : ''}">
+    function itemHtml(d, { src, id, pending, deleting, badge, error }) {
+        return `
+            <div class="item ${pending ? 'pending' : ''} ${deleting ? 'deleting' : ''}">
                 <div class="row1">
                     <div>
-                        <div class="name">${esc(r.data.nama || '(tanpa nama)')}</div>
-                        <div class="meta">${fmtDate(r.data.tanggal)} · ${esc(PPM.desa[r.data.desa_id] || 'Tanpa desa')} · Rata-rata ${avg(r.data)}${r.data.penginput ? ' · Input: ' + esc(r.data.penginput) : ''}</div>
-                        <div class="meta">${esc(PPM.rincian[r.data.rincian_id]?.nama || (r.data.rincian_id ? r.data.rincian_id : 'Data lama: belum ada program — klik Ubah untuk melengkapi'))}${perusahaanText(r.data)}</div>
+                        <div class="name">${esc(d.nama || '(tanpa nama)')}</div>
+                        <div class="meta">${fmtDate(d.tanggal)} · ${esc(PPM.desa[d.desa_id] || 'Tanpa desa')} · Rata-rata ${avg(d)}${d.penginput ? ' · Input: ' + esc(d.penginput) : ''}</div>
+                        <div class="meta">${esc(PPM.rincian[d.rincian_id]?.nama || (d.rincian_id ? d.rincian_id : 'Data lama: belum ada program — klik Ubah untuk melengkapi'))}${perusahaanText(d)}</div>
                     </div>
-                    ${badge(r)}
+                    ${badge}
                 </div>
-                ${r.error ? `<div class="err">${esc(r.error)}</div>` : ''}
+                ${error ? `<div class="err">${esc(error)}</div>` : ''}
                 <div class="btns">
-                    ${r.state === 'delete'
-                        ? `<button type="button" class="btn-light" data-act="undo" data-key="${esc(r.key)}">Batal hapus</button>`
-                        : `<button type="button" class="btn-light" data-act="edit" data-key="${esc(r.key)}">Ubah</button>
-                           <button type="button" class="btn-danger" data-act="delete" data-key="${esc(r.key)}">Hapus</button>`}
+                    ${deleting && src === 'local'
+                        ? `<button type="button" class="btn-light" data-src="local" data-act="undo" data-id="${esc(id)}">Batal hapus</button>`
+                        : deleting ? ''
+                        : `<button type="button" class="btn-light" data-src="${src}" data-act="edit" data-id="${esc(id)}">Ubah</button>
+                           <button type="button" class="btn-danger" data-src="${src}" data-act="delete" data-id="${esc(id)}">Hapus</button>`}
                 </div>
-            </div>`).join('') : `<div class="empty">${q ? 'Tidak ada data yang cocok.' : 'Belum ada data.'}</div>`;
+            </div>`;
+    }
+
+    async function pendingRecords() {
+        return (await getAll()).filter((r) => r.state !== 'synced');
+    }
+
+    async function render() {
+        const pending = await pendingRecords();
+        const q = $('search').value.trim().toLowerCase();
+        const pendingShown = pending
+            .filter((r) => !q || (r.data.nama || '').toLowerCase().includes(q) || (r.data.nohp || '').includes(q))
+            .sort((a, b) => (b.savedAt || 0) - (a.savedAt || 0));
+
+        $('pendingWrap').hidden = !pendingShown.length;
+        $('pendingList').innerHTML = pendingShown.map((r) => itemHtml(r.data, {
+            src: 'local', id: r.key, pending: true, deleting: r.state === 'delete', badge: badgeLocal(r), error: r.error,
+        })).join('');
+
+        // Baris sistem yang sedang punya perubahan/penghapusan di perangkat ditandai
+        const pendingIds = new Map(pending.filter((r) => r.serverId).map((r) => [r.serverId, r]));
+        let html;
+        if (listState === 'loading' && !serverRows.length) {
+            html = '<div class="empty">Memuat data…</div>';
+        } else if (listState === 'error' && !serverRows.length) {
+            html = `<div class="empty">${esc(listMessage || 'Daftar data tidak bisa dimuat.')}</div>`;
+        } else if (!serverRows.length) {
+            html = `<div class="empty">${q ? 'Tidak ada data yang cocok.' : 'Belum ada data.'}</div>`;
+        } else {
+            html = serverRows.map((row) => {
+                const local = pendingIds.get(row.id);
+                return itemHtml(local ? { ...row, ...local.data } : row, {
+                    src: 'server', id: row.id, pending: !!local, deleting: local?.state === 'delete',
+                    badge: local ? badgeLocal(local) : '<span class="badge ok">✓ Tersimpan di sistem</span>',
+                    error: local?.error,
+                });
+            }).join('');
+        }
+        if (listState === 'cache') {
+            html = `<div class="note-cache">${esc(listMessage)}</div>` + html;
+        }
+        $('list').innerHTML = html;
+
+        $('pager').innerHTML = total || page > 1 ? `
+            <span>${rangeFrom ? `${rangeFrom}–${rangeTo} dari <b>${total}</b> data` : `<b>${total}</b> data`}</span>
+            <span class="nav">
+                <button type="button" class="btn-light" data-page="${page - 1}" ${page <= 1 || listState === 'loading' ? 'disabled' : ''}>‹ Sebelumnya</button>
+                <span>Hal. <b>${page}</b> / ${lastPage}</span>
+                <button type="button" class="btn-light" data-page="${page + 1}" ${page >= lastPage || listState === 'loading' ? 'disabled' : ''}>Berikutnya ›</button>
+            </span>
+            <label>Tampilkan <select id="perPage">${PER_PAGE_OPTIONS.map((n) => `<option value="${n}" ${n === perPage ? 'selected' : ''}>${n}</option>`).join('')}</select> per halaman</label>`
+            : '';
+
+        $('summary').innerHTML = `<span>Data di sistem: <b>${total}</b></span>`
+            + `<span style="${pending.length ? 'background:#fef3c7;border-color:#fcd34d' : ''}">Belum terkirim: <b>${pending.length}</b></span>`;
 
         updateStatus(pending.length);
     }
 
-    $('list').addEventListener('click', async (e) => {
+    /** Muat satu halaman dari sistem (hanya halaman yang diminta). */
+    async function loadPage(p = page) {
+        const q = $('search').value.trim();
+        listState = 'loading';
+        await render();
+        try {
+            const params = new URLSearchParams({ page: String(Math.max(1, p)), per_page: String(perPage) });
+            if (q) params.set('q', q);
+            const r = await request('GET', `${API}?${params}`);
+            if (!r.ok) {
+                listState = 'error';
+                listMessage = errorText(r);
+                return;
+            }
+            const m = r.json.meta;
+            // Halaman kosong karena data berkurang: mundur ke halaman terakhir yang ada
+            if (!r.json.data.length && m.current_page > 1 && m.last_page < m.current_page) {
+                return loadPage(m.last_page);
+            }
+            serverRows = r.json.data;
+            page = m.current_page; lastPage = m.last_page; total = m.total; rangeFrom = m.from || 0; rangeTo = m.to || 0;
+            listState = 'ok';
+            listMessage = '';
+            setOnline(true);
+            if (!q) cacheSet({ rows: serverRows, page, lastPage, total, rangeFrom, rangeTo, perPage, at: Date.now() });
+        } catch (err) {
+            if (err instanceof SessionError) {
+                sessionExpired = true;
+                listState = 'error';
+                listMessage = 'Sesi login berakhir. Login ulang untuk melihat data di sistem.';
+            } else {
+                online = false;
+                const c = cacheGet();
+                if (c && !q) {
+                    ({ rows: serverRows, page, lastPage, total, rangeFrom, rangeTo } = c);
+                    listState = 'cache';
+                    listMessage = 'Sedang offline. Menampilkan halaman terakhir yang dibuka ('
+                        + new Date(c.at).toLocaleString('id-ID', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) + ').';
+                } else {
+                    listState = 'error';
+                    listMessage = 'Sedang offline. Daftar data sistem akan dimuat saat internet tersedia.';
+                }
+            }
+        } finally {
+            if (listState === 'loading') listState = 'ok';
+            await render();
+        }
+    }
+
+    function startEdit(key, data, serverRow = null) {
+        editingKey = key;
+        editingServer = serverRow;
+        fillForm(data);
+        $('editingNote').textContent = 'Mode ubah: ' + (data.nama || '(tanpa nama)');
+        $('editingNote').hidden = false;
+        $('cancelEdit').hidden = false;
+        $('submitBtn').textContent = 'Simpan perubahan';
+        $('formCard').scrollIntoView({ behavior: 'smooth' });
+    }
+
+    async function onListClick(e) {
         const btn = e.target.closest('button[data-act]');
         if (!btn) return;
-        const rec = await getOne(btn.dataset.key);
-        if (!rec) return render();
+        const act = btn.dataset.act;
 
-        if (btn.dataset.act === 'edit') {
-            editingKey = rec.key;
-            fillForm(rec.data);
-            $('editingNote').textContent = 'Mode ubah: ' + (rec.data.nama || '(tanpa nama)');
-            $('editingNote').hidden = false;
-            $('cancelEdit').hidden = false;
-            $('submitBtn').textContent = 'Simpan perubahan';
-            $('formCard').scrollIntoView({ behavior: 'smooth' });
-        }
-        if (btn.dataset.act === 'delete') {
-            if (!confirm('Hapus data "' + (rec.data.nama || '') + '"?')) return;
-            if (editingKey === rec.key) resetForm();
-            if (rec.state === 'create' && !syncing) {
-                await del(rec.key); // never reached the server, just drop it
-            } else {
-                rec.state = 'delete'; rec.error = null; rec.savedAt = Date.now();
-                await put(rec);
+        if (btn.dataset.src === 'local') {
+            const rec = await getOne(btn.dataset.id);
+            if (!rec) return render();
+            if (act === 'edit') startEdit(rec.key, rec.data);
+            if (act === 'delete') {
+                if (!confirm('Hapus data "' + (rec.data.nama || '') + '"?')) return;
+                if (editingKey === rec.key) resetForm();
+                if (rec.state === 'create' && !syncing) {
+                    await del(rec.key); // belum pernah terkirim, cukup dibuang
+                } else {
+                    rec.state = 'delete'; rec.error = null; rec.savedAt = Date.now();
+                    await put(rec);
+                }
+                await render();
+                sync();
             }
+            if (act === 'undo') {
+                if (rec.serverId && !rec.data.client_uuid) {
+                    await del(rec.key); // hanya batal hapus data sistem: tidak ada perubahan yang perlu dikirim
+                } else {
+                    rec.state = rec.serverId ? 'update' : 'create'; rec.error = null; rec.savedAt = Date.now();
+                    await put(rec);
+                }
+                await render();
+                sync();
+            }
+            return;
+        }
+
+        // Data dari daftar sistem
+        const id = Number(btn.dataset.id);
+        const row = serverRows.find((r) => r.id === id);
+        if (!row) return;
+        const local = (await pendingRecords()).find((r) => r.serverId === id);
+        if (act === 'edit') {
+            if (local) startEdit(local.key, local.data);
+            else startEdit('srv-' + id, row, row);
+        }
+        if (act === 'delete') {
+            if (!confirm('Hapus data "' + (row.nama || '') + '"?')) return;
+            if (editingKey === (local?.key || 'srv-' + id)) resetForm();
+            await put({ key: local?.key || 'srv-' + id, serverId: id, data: local?.data || row, state: 'delete', error: null, savedAt: Date.now() });
             await render();
             sync();
         }
-        if (btn.dataset.act === 'undo') {
-            // Re-send current data so the server copy stays as shown.
-            rec.state = rec.serverId ? 'update' : 'create'; rec.error = null; rec.savedAt = Date.now();
-            await put(rec);
-            await render();
-            sync();
-        }
+    }
+    $('list').addEventListener('click', onListClick);
+    $('pendingList').addEventListener('click', onListClick);
+    $('pager').addEventListener('click', (e) => {
+        const btn = e.target.closest('button[data-page]');
+        if (btn && !btn.disabled) loadPage(Number(btn.dataset.page));
     });
-    $('search').addEventListener('input', () => render());
+    $('pager').addEventListener('change', (e) => {
+        if (e.target.id === 'perPage') { perPage = Number(e.target.value) || 10; loadPage(1); }
+    });
+    let searchTimer = null;
+    $('search').addEventListener('input', () => {
+        render();
+        clearTimeout(searchTimer);
+        searchTimer = setTimeout(() => loadPage(1), 400); // cari di sistem setelah berhenti mengetik
+    });
 
     // ---------- Status bar ----------
     function updateStatus(pendingCount) {
@@ -577,7 +741,7 @@
         statusMsg.textContent = msg;
         $('syncBtn').hidden = !n || syncing;
     }
-    const setOnline = (value) => { online = value; render(); };
+    const setOnline = (value) => { online = value; };
 
     // ---------- Server sync ----------
     class SessionError extends Error {}
@@ -601,13 +765,14 @@
         return 'Server bermasalah (kode ' + r.status + '). Akan dicoba lagi.';
     };
 
+    /** Kirim satu data; bila berhasil, salinan di perangkat dihapus (data sudah ada di sistem). */
     async function sendOne(rec) {
         const startedAt = rec.savedAt;
         let r;
         if (rec.state === 'create') r = await request('POST', API, rec.data);
         else if (rec.state === 'update') r = await request('PUT', `${API}/${rec.serverId}`, rec.data);
         else if (rec.state === 'delete') {
-            if (!rec.serverId) { await del(rec.key); return; }
+            if (!rec.serverId) { await del(rec.key); return true; }
             r = await request('DELETE', `${API}/${rec.serverId}`);
         }
         if (r.status === 419) throw new SessionError('csrf');
@@ -615,22 +780,23 @@
         const cur = await getOne(rec.key);
         if (!r.ok) {
             if (cur) { cur.error = errorText(r); await put(cur); }
-            return;
+            return false;
         }
-        if (rec.state === 'delete') { await del(rec.key); return; }
+        if (rec.state === 'delete') { await del(rec.key); return true; }
 
         const serverRow = r.json.data;
         if (!cur) {
-            // Deleted on the device while it was being sent: remove it from the server too.
+            // Dihapus di perangkat saat sedang dikirim: hapus juga di sistem.
             await put({ key: rec.key, serverId: serverRow.id, data: serverRow, state: 'delete', error: null, savedAt: Date.now() });
         } else if (cur.savedAt !== startedAt) {
-            // Changed on the device while it was being sent: keep the newer local version.
+            // Diubah lagi saat sedang dikirim: simpan versi terbaru untuk dikirim berikutnya.
             cur.serverId = serverRow.id;
             if (cur.state === 'create') cur.state = 'update';
             await put(cur);
         } else {
-            await put({ key: rec.key, serverId: serverRow.id, data: serverRow, state: 'synced', error: null, savedAt: Date.now() });
+            await del(rec.key);
         }
+        return true;
     }
 
     async function refreshToken() {
@@ -638,44 +804,28 @@
         if (r.ok && r.json?.token) csrf = r.json.token;
     }
 
-    async function pullFromServer() {
-        const r = await request('GET', API);
-        if (!r.ok) return;
-        const local = await getAll();
-        const pendingKeys = new Set(local.filter((x) => x.state !== 'synced').map((x) => x.key));
-        const pendingIds = new Set(local.filter((x) => x.state !== 'synced' && x.serverId).map((x) => x.serverId));
-        await tx('readwrite', (s) => {
-            for (const x of local) if (x.state === 'synced') s.delete(x.key);
-            for (const row of r.json.data) {
-                const key = row.client_uuid || ('srv-' + row.id);
-                if (pendingKeys.has(key) || pendingIds.has(row.id)) continue;
-                s.put({ key, serverId: row.id, data: row, state: 'synced', error: null, savedAt: 0 });
-            }
-        });
-    }
-
-    async function sync({ pull = true } = {}) {
+    async function sync({ reload = false } = {}) {
         if (syncing) return;
         syncing = true;
+        let sent = 0;
         await render();
         try {
             await refreshToken(); // also tells us if we are online and still logged in
             setOnline(true);
             sessionExpired = false;
-            const queue = (await getAll()).filter((r) => r.state !== 'synced').sort((a, b) => a.savedAt - b.savedAt);
+            const queue = (await pendingRecords()).sort((a, b) => a.savedAt - b.savedAt);
             for (const rec of queue) {
                 try {
-                    await sendOne(rec);
+                    if (await sendOne(rec)) sent++;
                 } catch (err) {
                     if (err instanceof SessionError && err.message === 'csrf') {
                         await refreshToken();
-                        await sendOne(rec);
+                        if (await sendOne(rec)) sent++;
                     } else {
                         throw err;
                     }
                 }
             }
-            if (pull) await pullFromServer();
             lastSync = new Date();
         } catch (err) {
             if (err instanceof SessionError) sessionExpired = true;
@@ -684,22 +834,32 @@
             syncing = false;
             await render();
         }
+        // Muat ulang halaman yang sedang dibuka hanya bila ada data terkirim atau diminta
+        if (online && !sessionExpired && (sent || reload || listState === 'cache' || listState === 'error')) {
+            await loadPage(page);
+        }
     }
 
     $('syncBtn').addEventListener('click', () => sync());
-    $('refreshBtn').addEventListener('click', () => sync());
+    $('refreshBtn').addEventListener('click', () => sync({ reload: true }));
     window.addEventListener('online', () => { online = true; sync(); });
-    window.addEventListener('offline', () => setOnline(false));
-    // Keep trying in the background; navigator.onLine is not reliable on weak networks.
-    setInterval(() => { if (!syncing) sync({ pull: !online }); }, 30000);
+    window.addEventListener('offline', () => { setOnline(false); render(); });
+    // Kirim data tertunda di latar belakang; daftar tidak dimuat ulang bila tidak ada perubahan.
+    setInterval(() => { if (!syncing) sync(); }, 30000);
     document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') sync(); });
 
     if ('serviceWorker' in navigator) {
         navigator.serviceWorker.register('/sw.js').catch(() => {});
     }
 
-    resetForm();
-    render().then(() => sync());
+    (async () => {
+        // Versi lama menyimpan salinan data sistem di perangkat; sekarang hanya data tertunda yang disimpan.
+        for (const r of await getAll()) if (r.state === 'synced') await del(r.key);
+        resetForm();
+        await render();
+        await sync();
+        if (listState === 'idle') await loadPage(1);
+    })();
 })();
 </script>
 </body>

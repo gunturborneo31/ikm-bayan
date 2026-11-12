@@ -150,10 +150,15 @@ class AkunSurveyorTest extends TestCase
         $this->assertSame($s->id, (int) $row->input_oleh);
         $this->assertSame('input_admin', $row->sumber_input);
 
-        // Admin mengubah: penginput asli tetap
-        $admin = $this->akun('admin');
-        $this->sebagai($admin)->putJson('/admin/responden/' . $row->id, ['perusahaan_jawaban' => 'TJ'] + $payload)->assertOk();
+        // Penginput mengubah datanya sendiri: penginput tetap
+        $this->sebagai($s)->putJson('/admin/responden/' . $row->id, ['perusahaan_jawaban' => 'TJ'] + $payload)->assertOk();
         $this->assertSame($s->id, (int) DB::table('survey_responses')->where('id', $row->id)->value('input_oleh'));
+
+        // Akun lain tidak melihat / mengubah data ini di Input Responden (tetap terlihat di Resume)
+        $admin = $this->akun('admin');
+        $this->sebagai($admin)->putJson('/admin/responden/' . $row->id, $payload)->assertNotFound();
+        $ids = collect($this->sebagai($admin)->getJson('/admin/responden?q=Responden+Uji+Penginput')->json('data'))->pluck('id');
+        $this->assertNotContains($row->id, $ids);
 
         // Resume: kolom & filter penginput, detail
         $this->sebagai($admin)->get('/rekapTotal?jenkel=1&usia=1&pekerjaan=1&pendidikan=1&Tahun=2026&penginput=' . $s->id)

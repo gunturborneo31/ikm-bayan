@@ -24,7 +24,8 @@ use Illuminate\Validation\ValidationException;
  */
 class AdminRespondenController extends Controller
 {
-    private const LIST_LIMIT = 200;
+    /** Pilihan jumlah baris per halaman; yang pertama dipakai sebagai default. */
+    private const PER_PAGE = [10, 25, 50];
 
     private const IDENTITAS = ['nama', 'nohp', 'alamat', 'jenkel', 'usia', 'pendidikan', 'pekerjaan', 'jenis_responden', 'saran'];
 
@@ -47,8 +48,15 @@ class AdminRespondenController extends Controller
         return response()->json(['token' => csrf_token()]);
     }
 
+    /**
+     * Satu halaman daftar (default 10 baris). Data hanya dimuat per halaman saat dibuka,
+     * tidak sekaligus semuanya.
+     */
     public function index(Request $request): JsonResponse
     {
+        $perPage = (int) $request->query('per_page', self::PER_PAGE[0]);
+        $perPage = in_array($perPage, self::PER_PAGE, true) ? $perPage : self::PER_PAGE[0];
+
         $query = $this->scopedQuery()->orderByDesc('created_at')->orderByDesc('id');
 
         if ($search = trim((string) $request->query('q'))) {
@@ -57,9 +65,18 @@ class AdminRespondenController extends Controller
             });
         }
 
+        $page = $query->paginate($perPage);
+
         return response()->json([
-            'data' => $query->limit(self::LIST_LIMIT)->get()->map(fn ($row) => $this->present($row)),
-            'limit' => self::LIST_LIMIT,
+            'data' => collect($page->items())->map(fn ($row) => $this->present($row)),
+            'meta' => [
+                'current_page' => $page->currentPage(),
+                'last_page' => $page->lastPage(),
+                'per_page' => $page->perPage(),
+                'total' => $page->total(),
+                'from' => $page->firstItem(),
+                'to' => $page->lastItem(),
+            ],
         ]);
     }
 
@@ -237,12 +254,21 @@ class AdminRespondenController extends Controller
     }
 
     /**
-     * Full admins see every record (older entries may have no pilar);
-     * role-limited admins only see their own pilar.
+     * Data yang terlihat (dan boleh diubah/dihapus) di halaman ini:
+     * - data yang diinput akun ini sendiri, dan
+     * - data tanpa keterangan penginput (survei online / data lama) untuk semua akun.
+     * Data yang diinput akun lain tidak ditampilkan.
+     * Admin dengan role terbatas pilar juga hanya melihat pilarnya.
      */
     private function scopedQuery()
     {
-        $query = NilaiUnsur::query();
+        $userId = \App\Support\Akses::userId();
+        $query = NilaiUnsur::query()->where(function ($q) use ($userId) {
+            $q->whereNull('input_oleh');
+            if ($userId) {
+                $q->orWhere('input_oleh', $userId);
+            }
+        });
         $allowed = $this->allowedPilarCodes();
 
         if (count($allowed) < count(BagianOptions::codes())) {

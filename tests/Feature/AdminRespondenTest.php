@@ -117,4 +117,42 @@ class AdminRespondenTest extends TestCase
         // Kirim ulang client_uuid yang sama tidak membuat data ganda
         $this->postJson('/admin/responden', $this->payload(['client_uuid' => $a['client_uuid']]))->assertOk()->assertJsonPath('duplicate', true);
     }
+
+    public function test_daftar_per_halaman_default_10(): void
+    {
+        $nama = 'Uji Halaman ' . uniqid();
+        foreach (range(1, 12) as $n) {
+            $this->postJson('/admin/responden', $this->payload(['nama' => "{$nama} {$n}"]))->assertCreated();
+        }
+
+        $res = $this->getJson('/admin/responden?q=' . urlencode($nama))->assertOk();
+        $this->assertCount(10, $res->json('data'));
+        $res->assertJsonPath('meta.total', 12)->assertJsonPath('meta.per_page', 10)->assertJsonPath('meta.last_page', 2);
+
+        $this->getJson('/admin/responden?page=2&q=' . urlencode($nama))->assertOk()->assertJsonCount(2, 'data');
+        $this->getJson('/admin/responden?per_page=25&q=' . urlencode($nama))->assertOk()->assertJsonCount(12, 'data');
+        // Ukuran halaman di luar pilihan kembali ke 10
+        $this->getJson('/admin/responden?per_page=1000&q=' . urlencode($nama))->assertOk()->assertJsonPath('meta.per_page', 10);
+    }
+
+    public function test_hanya_data_sendiri_dan_tanpa_penginput_yang_terlihat(): void
+    {
+        $nama = 'Uji Lihat ' . uniqid();
+        $milikSendiri = $this->postJson('/admin/responden', $this->payload(['nama' => "{$nama} sendiri"]))->json('data.id');
+        $milikLain = $this->postJson('/admin/responden', $this->payload(['nama' => "{$nama} lain"]))->json('data.id');
+        $tanpaLabel = $this->postJson('/admin/responden', $this->payload(['nama' => "{$nama} tanpa"]))->json('data.id');
+
+        DB::table('survey_responses')->where('id', $milikLain)->update(['input_oleh' => 987654]);
+        DB::table('survey_responses')->where('id', $tanpaLabel)->update(['input_oleh' => null, 'sumber_input' => null]);
+
+        $ids = collect($this->getJson('/admin/responden?q=' . urlencode($nama))->assertOk()->json('data'))->pluck('id')->all();
+        $this->assertContains($milikSendiri, $ids);
+        $this->assertContains($tanpaLabel, $ids);
+        $this->assertNotContains($milikLain, $ids);
+
+        // Data akun lain tidak bisa diubah atau dihapus dari halaman ini
+        $this->putJson('/admin/responden/' . $milikLain, $this->payload())->assertNotFound();
+        $this->deleteJson('/admin/responden/' . $milikLain)->assertOk();
+        $this->assertTrue(DB::table('survey_responses')->where('id', $milikLain)->exists());
+    }
 }
