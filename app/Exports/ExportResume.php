@@ -72,19 +72,19 @@ class ExportResume implements FromCollection, WithHeadings, WithCustomStartCell,
         $tu8 = (clone $baseQuery)->get()->sum('u8');
         $tu9 = (clone $baseQuery)->get()->sum('u9');
 
-        $export = ['nik', 'nama','jenisPelayanan'];
-        $total = ['nik' => 'TOTAL'];
+        $export = ['nama', 'jenisPelayanan'];
+        
 
-        if($_GET['jenkel'] == 1 ){
+        if ($this->kolom('jenkel')) {
             array_push($export, "jenkel");
         }
-         if($_GET['usia'] == 1 ){
+         if ($this->kolom('usia')) {
             array_push($export, "usia");
         }
-         if($_GET['pekerjaan'] == 1 ){
+         if ($this->kolom('pekerjaan')) {
             array_push($export, "pekerjaan");
         }
-         if($_GET['pendidikan'] == 1 ){
+         if ($this->kolom('pendidikan')) {
             array_push($export, "pendidikan");
         }
 
@@ -126,17 +126,17 @@ class ExportResume implements FromCollection, WithHeadings, WithCustomStartCell,
     public function headings(): array
 
     {
-        $judul = ["NIK", "NAMA","JENIS PELAYANAN"];
-        if($_GET['jenkel'] == 1 ){
+        $judul = ["NAMA", "JENIS PELAYANAN"];
+        if ($this->kolom('jenkel')) {
             array_push($judul, "JENIS KELAMIN");
         }
-         if($_GET['usia'] == 1 ){
+         if ($this->kolom('usia')) {
             array_push($judul, "USIA (TAHUN)");
         }
-         if($_GET['pekerjaan'] == 1 ){
+         if ($this->kolom('pekerjaan')) {
             array_push($judul, "PEKERJAAN");
         }
-         if($_GET['pendidikan'] == 1 ){
+         if ($this->kolom('pendidikan')) {
             array_push($judul, "PENDIDIKAN");
         }
 
@@ -153,6 +153,12 @@ class ExportResume implements FromCollection, WithHeadings, WithCustomStartCell,
 
         return $judul;
 
+    }
+
+    /** Kolom identitas diekspor bila =1; bila parameter tidak dikirim, tetap diekspor. */
+    private function kolom(string $nama): bool
+    {
+        return (string) request()->query($nama, '1') === '1';
     }
 
     public function startCell(): string

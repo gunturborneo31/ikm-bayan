@@ -48,17 +48,17 @@ class ExportPendidikan implements FromCollection, WithHeadings, WithCustomStartC
 
         $baseQuery = \App\Support\SurveyFilter::query();
 
-        if($_GET['filter']==null or $_GET['filter']==1){
+        if(request()->query('filter')==null or request()->query('filter')==1){
             $selects = $baseQuery->get(['nik','nama','pendidikan','created_at']);
-        } else if($_GET['filter']==2) {
+        } else if(request()->query('filter')==2) {
             $selects = (clone $baseQuery)->where('pendidikan', 'laki')->get(['nik','nama','pendidikan','created_at']);
-        } else if($_GET['filter']==3) {
+        } else if(request()->query('filter')==3) {
             $selects = (clone $baseQuery)->where('pendidikan', 'perempuan')->get(['nik','nama','pendidikan','created_at']);
         } else {
             $selects = $baseQuery->get(['nik','nama','pendidikan','created_at']);
         }
 
-        // return dd($_GET['filter']);
+        // return dd(request()->query('filter'));
 
         return $selects;
 

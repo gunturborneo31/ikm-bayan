@@ -254,7 +254,7 @@ if ($n == 0) {
   </div>
 
                         {{-- download (mengikuti filter Tahun + Pilar) --}}
-                        <a href="{{ route('exports.download', ['type' => 'resume', 'jenkel' => $_GET['jenkel'], 'usia' => $_GET['usia'], 'pekerjaan' => $_GET['pekerjaan'], 'pendidikan' => $_GET['pendidikan'], 'Tahun' => \App\Support\SurveyFilter::year()] + (\App\Support\SurveyFilter::isAllPilar() ? [] : ['bagian' => \App\Support\SurveyFilter::pilarCsv()]) + array_filter(['tanggal_awal' => \App\Support\SurveyFilter::rentangTanggal()[0], 'tanggal_akhir' => \App\Support\SurveyFilter::rentangTanggal()[1], 'perusahaan' => \App\Support\SurveyFilter::selectedPerusahaan()])) }}"
+                        <a href="{{ route('exports.download', ['type' => 'resume', 'jenkel' => $jenkel, 'usia' => $usia, 'pekerjaan' => $pekerjaan, 'pendidikan' => $pendidikan, 'Tahun' => \App\Support\SurveyFilter::year()] + (\App\Support\SurveyFilter::isAllPilar() ? [] : ['bagian' => \App\Support\SurveyFilter::pilarCsv()]) + array_filter(['tanggal_awal' => \App\Support\SurveyFilter::rentangTanggal()[0], 'tanggal_akhir' => \App\Support\SurveyFilter::rentangTanggal()[1], 'perusahaan' => \App\Support\SurveyFilter::selectedPerusahaan()])) }}"
                             class="py-1 text-center items-center  bg-gradient-to-br from-[#EA580C] from-60%  to-[#FDBA74] to-95% rounded-full font-bold text-sm px-3  w-full  text-gray-900"
                             style="font-family:'Roboto'">
                             <p>DOWNLOAD</p>
@@ -283,16 +283,16 @@ if ($n == 0) {
                                             class="px-6 py-3 w-[50px] text-center text-xs font-medium text-gray-900 uppercase">
                                             JENIS<br>Pelayanan</th> --}}
                                         <th scope="col" rowspan="2"
-                                            class="px-6 py-3 w-[50px] text-center text-xs font-medium text-gray-900 uppercase {{ $_GET['jenkel'] == 0 ? 'hidden' : '' }}">
+                                            class="px-6 py-3 w-[50px] text-center text-xs font-medium text-gray-900 uppercase {{ $jenkel == 0 ? 'hidden' : '' }}">
                                             JENIS<br>KELAMIN</th>
                                         <th scope="col" rowspan="2"
-                                            class="px-6 py-3 w-[50px] text-center text-xs font-medium text-gray-900 uppercase {{ $_GET['usia'] == 0 ? 'hidden' : '' }}">
+                                            class="px-6 py-3 w-[50px] text-center text-xs font-medium text-gray-900 uppercase {{ $usia == 0 ? 'hidden' : '' }}">
                                             USIA</th>
                                         <th scope="col" rowspan="2"
-                                            class="px-6 py-3 w-[50px] text-center text-xs font-medium text-gray-900 uppercase {{ $_GET['pekerjaan'] == 0 ? 'hidden' : '' }}">
+                                            class="px-6 py-3 w-[50px] text-center text-xs font-medium text-gray-900 uppercase {{ $pekerjaan == 0 ? 'hidden' : '' }}">
                                             PEKERJAAN</th>
                                         <th scope="col" rowspan="2"
-                                            class="px-6 py-3 w-[50px] text-center text-xs font-medium text-gray-900 uppercase {{ $_GET['pendidikan'] == 0 ? 'hidden' : '' }}">
+                                            class="px-6 py-3 w-[50px] text-center text-xs font-medium text-gray-900 uppercase {{ $pendidikan == 0 ? 'hidden' : '' }}">
                                             PENDIDIKAN</th>
                                         <th scope="col" rowspan="2"
                                             class="px-6 py-3 w-[50px] text-center text-xs font-medium text-gray-900 uppercase">
@@ -310,7 +310,7 @@ if ($n == 0) {
                                             class="px-6 py-3 min-w-[130px] text-center text-xs font-medium text-gray-900 uppercase">
                                             DIINPUT<br>OLEH</th>
                                         {{-- <th scope="col" rowspan="2"
-                                            class="px-6 py-3 w-[50px] text-center text-xs font-medium text-gray-900 uppercase {{ $_GET['pendidikan'] == 0 ? 'hidden' : '' }}">
+                                            class="px-6 py-3 w-[50px] text-center text-xs font-medium text-gray-900 uppercase {{ $pendidikan == 0 ? 'hidden' : '' }}">
                                             JENIS PELAYANAN</th> --}}
                                         <th scope="col" colspan="9"
                                             class=" px-6 px-6 py-1 w-[50px] text-center text-xs font-medium text-gray-900 uppercase ">
@@ -372,19 +372,19 @@ if ($n == 0) {
                                                     {{ $data->jenisPelayanan }}
                                                 </td> --}}
                                                 <td
-                                                    class="text-center px-2 font-normal text-xs {{ $_GET['jenkel'] == 0 ? 'hidden' : '' }}">
+                                                    class="text-center px-2 font-normal text-xs {{ $jenkel == 0 ? 'hidden' : '' }}">
                                                     {{ $data->jenkel }}
                                                 </td>
                                                 <td
-                                                    class="text-center px-2 font-normal text-xs {{ $_GET['usia'] == 0 ? 'hidden' : '' }}">
+                                                    class="text-center px-2 font-normal text-xs {{ $usia == 0 ? 'hidden' : '' }}">
                                                     {{ $data->usia }}
                                                 </td>
                                                 <td
-                                                    class="text-center px-2 font-normal text-xs {{ $_GET['pekerjaan'] == 0 ? 'hidden' : '' }}">
+                                                    class="text-center px-2 font-normal text-xs {{ $pekerjaan == 0 ? 'hidden' : '' }}">
                                                     {{ $data->pekerjaan }}
                                                 </td>
                                                 <td
-                                                    class="text-center px-2 font-normal text-xs {{ $_GET['pendidikan'] == 0 ? 'hidden' : '' }}">
+                                                    class="text-center px-2 font-normal text-xs {{ $pendidikan == 0 ? 'hidden' : '' }}">
                                                     {{ $data->pendidikan }}
                                                 </td>
                                                 <td class="text-center px-2 font-normal text-xs">
@@ -406,7 +406,7 @@ if ($n == 0) {
                                                     {{ \App\Support\Akses::penginputLabel($data->input_oleh, $data->sumber_input) }}
                                                 </td>
                                                 {{-- <td
-                                                    class="text-center px-2 font-normal text-xs {{ $_GET['usia'] == 0 ? 'hidden' : '' }}">
+                                                    class="text-center px-2 font-normal text-xs {{ $usia == 0 ? 'hidden' : '' }}">
                                                     {{ $data->sub_jenis_jenis }}
                                                 </td> --}}
                                                 <td class="text-center px-2 font-normal text-xs">
